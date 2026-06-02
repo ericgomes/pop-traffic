@@ -152,10 +152,15 @@ class DashboardView {
 
   _renderMetricOptions(model) {
     const all = ['sessoes', 'usuarios', 'conversoes', 'receita'];
+    const sources = model.sourceHeaders || {};
     document.getElementById('metric-options').innerHTML = all.map((m) => {
       const enabled = model.availableMetrics.indexOf(m) !== -1;
       const cls = 'metric-opt' + (m === model.metric ? ' active' : '') + (enabled ? '' : ' disabled');
-      return '<div class="' + cls + '" data-metric="' + m + '"><span>' + (m === model.metric ? '●' : '○') + '</span> ' + Formatter.metricLabel(m) + '</div>';
+      const src = sources[m] && Normalizer.normalizeName(sources[m]) !== Normalizer.normalizeName(Formatter.metricLabel(m))
+        ? '<small class="metric-src">← ' + this._esc(sources[m]) + '</small>'
+        : '';
+      return '<div class="' + cls + '" data-metric="' + m + '"><span>' + (m === model.metric ? '●' : '○') + '</span> ' +
+        Formatter.metricLabel(m) + src + '</div>';
     }).join('');
   }
 

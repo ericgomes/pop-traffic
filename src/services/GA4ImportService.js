@@ -34,7 +34,11 @@ class GA4ImportService {
     const metrics = ['sessoes', 'usuarios', 'conversoes', 'receita'].filter(
       (m) => fields[m] !== undefined && rows.some((r) => r[m] > 0)
     );
-    return { ok: true, rows: rows, fields: fields, metrics: metrics, delimiter: delimiter, header: header };
+    const sourceHeaders = {};
+    for (const field of Object.keys(fields)) {
+      sourceHeaders[field] = header[fields[field]] || '';
+    }
+    return { ok: true, rows: rows, fields: fields, metrics: metrics, sourceHeaders: sourceHeaders, delimiter: delimiter, header: header };
   }
 
   _splitLines(text) {

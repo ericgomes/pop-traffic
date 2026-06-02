@@ -9,6 +9,7 @@ class DashboardController {
 
     this.rawRows = [];
     this.availableMetrics = [];
+    this.sourceHeaders = {};
     this.metric = 'sessoes';
     this.matchResult = null;
     this.activeTab = 'dashboard';
@@ -51,6 +52,7 @@ class DashboardController {
     }
     this.rawRows = parsed.rows;
     this.availableMetrics = parsed.metrics;
+    this.sourceHeaders = parsed.sourceHeaders || {};
     this.metric = parsed.metrics.length ? parsed.metrics[0] : 'sessoes';
     this.filters = this._emptyFilters();
     this._runMatch();
@@ -186,6 +188,7 @@ class DashboardController {
     this.view.render({
       metric: this.metric,
       availableMetrics: this.availableMetrics,
+      sourceHeaders: this.sourceHeaders,
       matchResult: this.matchResult,
       view: viewModel,
       filtered: filtered,
