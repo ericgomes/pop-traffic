@@ -27,6 +27,9 @@ class DashboardView {
     document.getElementById('sample-btn').addEventListener('click', () => c.loadSample());
     document.getElementById('reset-filters').addEventListener('click', () => c.resetFilters());
 
+    this._restoreSidebar();
+    document.getElementById('sidebar-toggle').addEventListener('click', () => this._toggleSidebar());
+
     document.getElementById('tabs').addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-tab]');
       if (btn) c.setActiveTab(btn.dataset.tab);
@@ -79,6 +82,28 @@ class DashboardView {
     const patch = {};
     patch[input.dataset.filter] = value === null || isNaN(value) ? null : value;
     this.controller.updateFilters(patch);
+  }
+
+  _restoreSidebar() {
+    let collapsed = false;
+    try {
+      collapsed = localStorage.getItem('sidebar_collapsed') === '1';
+    } catch (e) {}
+    this._applySidebar(collapsed);
+  }
+
+  _toggleSidebar() {
+    const collapsed = !document.querySelector('.layout').classList.contains('collapsed');
+    this._applySidebar(collapsed);
+    try {
+      localStorage.setItem('sidebar_collapsed', collapsed ? '1' : '0');
+    } catch (e) {}
+  }
+
+  _applySidebar(collapsed) {
+    document.querySelector('.layout').classList.toggle('collapsed', collapsed);
+    const label = document.querySelector('#sidebar-toggle .st-label');
+    if (label) label.textContent = collapsed ? 'Mostrar painel' : 'Painel';
   }
 
   _onContentClick(e) {

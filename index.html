@@ -54,7 +54,12 @@
       <div id="kpi-grid" class="kpi-grid"></div>
 
       <div class="toolbar">
-        <nav class="tabs" id="tabs"></nav>
+        <div class="toolbar-left">
+          <button id="sidebar-toggle" class="sidebar-toggle" type="button" title="Mostrar/ocultar painel lateral" aria-label="Mostrar/ocultar painel lateral">
+            <span class="st-icon">⮜</span><span class="st-label">Painel</span>
+          </button>
+          <nav class="tabs" id="tabs"></nav>
+        </div>
         <div class="export-bar" id="export-bar" hidden>
           <span>Exportar:</span>
           <button class="btn btn-export" data-export="csv">CSV</button>
