@@ -72,6 +72,7 @@ class Formatter {
 
 Formatter.METRIC_LABELS = {
   sessoes: 'Sessões',
+  engajadas: 'Sessões engajadas',
   usuarios: 'Usuários',
   conversoes: 'Conversões',
   receita: 'Receita'

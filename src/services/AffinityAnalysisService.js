@@ -25,11 +25,12 @@ class AffinityAnalysisService {
   }
 
   _sumTotals(performances) {
-    const metric = { sessoes: 0, usuarios: 0, conversoes: 0, receita: 0 };
+    const metric = { sessoes: 0, engajadas: 0, usuarios: 0, conversoes: 0, receita: 0 };
     let population = 0;
     for (const perf of performances) {
       population += perf.municipio.population;
       metric.sessoes += perf.metrics.sessoes;
+      metric.engajadas += perf.metrics.engajadas;
       metric.usuarios += perf.metrics.usuarios;
       metric.conversoes += perf.metrics.conversoes;
       metric.receita += perf.metrics.receita;
@@ -66,6 +67,7 @@ class AffinityAnalysisService {
       nationalPopulation: national,
       coverage: national ? totals.population / national : 0,
       totalSessoes: totals.metric.sessoes,
+      totalEngajadas: totals.metric.engajadas,
       totalUsuarios: totals.metric.usuarios,
       totalConversoes: totals.metric.conversoes,
       totalReceita: totals.metric.receita,

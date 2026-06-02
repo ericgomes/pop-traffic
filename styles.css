@@ -133,6 +133,8 @@ body {
 .kpi.good { border-left-color: var(--good); }
 .kpi.bad { border-left-color: var(--bad); }
 .kpi.accent { border-left-color: var(--accent); }
+.kpi.muted { opacity: .45; border-left-color: var(--line); background: #f8fafc; }
+.kpi.muted .k-val { color: var(--ink-soft); }
 
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .tabs { display: flex; gap: 4px; flex-wrap: wrap; background: #fff; padding: 5px; border-radius: 10px; box-shadow: var(--shadow); }

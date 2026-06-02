@@ -14,6 +14,7 @@ class CidadePerformance {
     this.municipio = municipio;
     this.metrics = {
       sessoes: 0,
+      engajadas: 0,
       usuarios: 0,
       conversoes: 0,
       receita: 0

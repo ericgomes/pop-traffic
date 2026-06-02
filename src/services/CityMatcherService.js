@@ -44,8 +44,8 @@ class CityMatcherService {
     const foreign = [];
     const ambiguous = [];
     let matchedRows = 0;
-    const totalAll = { sessoes: 0, usuarios: 0, conversoes: 0, receita: 0 };
-    const totalMatched = { sessoes: 0, usuarios: 0, conversoes: 0, receita: 0 };
+    const totalAll = { sessoes: 0, engajadas: 0, usuarios: 0, conversoes: 0, receita: 0 };
+    const totalMatched = { sessoes: 0, engajadas: 0, usuarios: 0, conversoes: 0, receita: 0 };
 
     for (const row of rows) {
       this._sum(totalAll, row);
@@ -69,7 +69,7 @@ class CityMatcherService {
     const performances = Array.from(byCode.values());
     const brRows = matchedRows + unmatched.length;
     const coverage = {};
-    for (const m of ['sessoes', 'usuarios', 'conversoes', 'receita']) {
+    for (const m of ['sessoes', 'engajadas', 'usuarios', 'conversoes', 'receita']) {
       coverage[m] = totalAll[m] ? totalMatched[m] / totalAll[m] : 0;
     }
     const stats = {
@@ -90,6 +90,7 @@ class CityMatcherService {
 
   _sum(acc, row) {
     acc.sessoes += row.sessoes || 0;
+    acc.engajadas += row.engajadas || 0;
     acc.usuarios += row.usuarios || 0;
     acc.conversoes += row.conversoes || 0;
     acc.receita += row.receita || 0;

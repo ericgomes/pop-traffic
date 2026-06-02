@@ -31,7 +31,7 @@ class GA4ImportService {
       if (!row.cidade) continue;
       rows.push(row);
     }
-    const metrics = ['sessoes', 'usuarios', 'conversoes', 'receita'].filter(
+    const metrics = ['sessoes', 'engajadas', 'usuarios', 'conversoes', 'receita'].filter(
       (m) => fields[m] !== undefined && rows.some((r) => r[m] > 0)
     );
     const sourceHeaders = {};
@@ -128,6 +128,7 @@ class GA4ImportService {
       estado: Normalizer.cleanSpaces(get('estado')),
       codigo: Normalizer.cleanSpaces(get('codigo')),
       sessoes: this._number(get('sessoes')),
+      engajadas: this._number(get('engajadas')),
       usuarios: this._number(get('usuarios')),
       conversoes: this._number(get('conversoes')),
       receita: this._number(get('receita'))
@@ -163,6 +164,7 @@ GA4ImportService.FIELD_DEFS = [
   { field: 'codigo', aliases: ['codigo ibge', 'cod ibge', 'ibge', 'codigo municipio', 'cod municipio'] },
   { field: 'cidade', aliases: ['cidade', 'municipio', 'city', 'town', 'localidade', 'town city'] },
   { field: 'estado', aliases: ['estado', 'state', 'uf', 'regiao', 'region', 'provincia'] },
+  { field: 'engajadas', aliases: ['sessoes engajadas', 'sessao engajada', 'engaged sessions', 'engaged session'] },
   { field: 'sessoes', aliases: ['sessoes', 'sessao', 'sessions', 'session', 'visitas'] },
   { field: 'usuarios', aliases: ['usuarios', 'usuario', 'users', 'user', 'total users', 'active users', 'visitantes'] },
   { field: 'conversoes', aliases: ['conversoes', 'conversao', 'conversions', 'conversion', 'key events', 'eventos principais', 'metas', 'ecommerce purchases', 'purchases', 'compras', 'transacoes', 'transactions'] },

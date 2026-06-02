@@ -151,7 +151,7 @@ class DashboardView {
   }
 
   _renderMetricOptions(model) {
-    const all = ['sessoes', 'usuarios', 'conversoes', 'receita'];
+    const all = ['sessoes', 'engajadas', 'usuarios', 'conversoes', 'receita'];
     const sources = model.sourceHeaders || {};
     document.getElementById('metric-options').innerHTML = all.map((m) => {
       const enabled = model.availableMetrics.indexOf(m) !== -1;
@@ -188,13 +188,24 @@ class DashboardView {
 
   _renderKpis(model) {
     const s = model.view.summary;
+    const has = (m) => model.availableMetrics.indexOf(m) !== -1;
+    const metricCard = (metric, value) => {
+      const on = has(metric);
+      return {
+        lbl: Formatter.metricLabel(metric),
+        val: on ? value : '—',
+        sub: on ? 'total' : 'sem dados',
+        cls: on ? '' : 'muted'
+      };
+    };
     const cards = [
       { lbl: 'Municípios', val: Formatter.integer(s.municipios), sub: 'com tráfego cruzado', cls: '' },
       { lbl: 'População coberta', val: Formatter.compact(s.population), sub: Formatter.percent(s.coverage, 1) + ' do Brasil', cls: 'accent' },
-      { lbl: 'Sessões', val: Formatter.compact(s.totalSessoes), sub: 'total', cls: '' },
-      { lbl: 'Usuários', val: Formatter.compact(s.totalUsuarios), sub: 'total', cls: '' },
-      { lbl: 'Conversões', val: Formatter.compact(s.totalConversoes), sub: 'total', cls: '' },
-      { lbl: 'Receita', val: Formatter.currency(s.totalReceita), sub: 'total', cls: '' },
+      metricCard('sessoes', Formatter.compact(s.totalSessoes)),
+      metricCard('engajadas', Formatter.compact(s.totalEngajadas)),
+      metricCard('usuarios', Formatter.compact(s.totalUsuarios)),
+      metricCard('conversoes', Formatter.compact(s.totalConversoes)),
+      metricCard('receita', Formatter.currency(s.totalReceita)),
       { lbl: 'Maior MPS', val: s.topCity ? Formatter.mps(s.topCity.indicators.mps) : '—', sub: s.topCity ? s.topCity.municipio.label : '', cls: 'good' },
       { lbl: 'Menor MPS', val: s.bottomCity ? Formatter.mps(s.bottomCity.indicators.mps) : '—', sub: s.bottomCity ? s.bottomCity.municipio.label : '', cls: 'bad' }
     ];
