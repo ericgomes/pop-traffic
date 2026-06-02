@@ -102,8 +102,11 @@ class DashboardView {
 
   _applySidebar(collapsed) {
     document.querySelector('.layout').classList.toggle('collapsed', collapsed);
-    const label = document.querySelector('#sidebar-toggle .st-label');
-    if (label) label.textContent = collapsed ? 'Mostrar painel' : 'Painel';
+    const btn = document.getElementById('sidebar-toggle');
+    if (btn) {
+      btn.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+      btn.title = collapsed ? 'Mostrar painel' : 'Ocultar painel';
+    }
   }
 
   _onContentClick(e) {

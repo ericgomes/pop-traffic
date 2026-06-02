@@ -61,8 +61,20 @@ body {
 
 .sidebar { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 20px; }
 
-.layout.collapsed { grid-template-columns: 1fr; }
-.layout.collapsed .sidebar { display: none; }
+.sidebar-toggle {
+  display: grid; place-items: center; width: 38px; height: 38px; flex: none; align-self: flex-start;
+  border: none; border-radius: 10px; cursor: pointer; color: var(--ink-soft);
+  background: #fff; box-shadow: var(--shadow); transition: color .15s, background .15s;
+}
+.sidebar-toggle:hover { color: var(--brand); background: #eff6ff; }
+.sidebar-toggle svg { width: 19px; height: 19px; }
+.sidebar-toggle[aria-pressed="true"] { color: var(--brand); }
+.sidebar-toggle[aria-pressed="true"] svg rect { opacity: .45; }
+.sidebar-toggle[aria-pressed="true"] svg line { display: none; }
+
+.layout.collapsed { grid-template-columns: 58px 1fr; }
+.layout.collapsed .sidebar { gap: 0; }
+.layout.collapsed .sidebar .panel { display: none; }
 
 .panel {
   background: var(--panel);
@@ -140,15 +152,6 @@ body {
 .kpi.muted .k-val { color: var(--ink-soft); }
 
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
-.toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.sidebar-toggle {
-  display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer;
-  background: #fff; color: var(--ink-soft); padding: 9px 12px; border-radius: 10px;
-  box-shadow: var(--shadow); font-size: 13px; font-weight: 600; transition: .15s; white-space: nowrap;
-}
-.sidebar-toggle:hover { color: var(--brand); }
-.sidebar-toggle .st-icon { font-size: 12px; transition: transform .2s; }
-.layout.collapsed .sidebar-toggle .st-icon { transform: rotate(180deg); }
 .tabs { display: flex; gap: 4px; flex-wrap: wrap; background: #fff; padding: 5px; border-radius: 10px; box-shadow: var(--shadow); }
 .tabs button { border: none; background: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
 .tabs button.active { background: var(--brand); color: #fff; }
