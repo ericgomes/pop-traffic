@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise Geográfica de Tráfego · MPS · IBGE POP2025 + GA4</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark">MPS</div>
+      <div>
+        <h1>Análise Geográfica de Tráfego</h1>
+        <p>Market Penetration Score · IBGE POP2025 + Google Analytics 4</p>
+      </div>
+    </div>
+    <div id="base-summary" class="base-summary"></div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="panel" id="import-panel">
+        <h2>1 · Importar GA4</h2>
+        <p class="hint">CSV exportado do GA4. Colunas opcionais: <code>cidade, estado, sessoes, usuarios, conversoes, receita</code>.</p>
+        <label class="file-drop" id="file-label">
+          <input type="file" id="file-input" accept=".csv,text/csv,text/plain" hidden>
+          <span>Selecionar arquivo CSV</span>
+        </label>
+        <details class="paste-block">
+          <summary>ou colar dados</summary>
+          <textarea id="paste-area" rows="6" placeholder="cidade,estado,sessoes,usuarios,conversoes,receita&#10;São Paulo,São Paulo,50000,38000,1200,350000"></textarea>
+          <button class="btn btn-secondary" id="paste-btn">Processar texto</button>
+        </details>
+        <button class="btn btn-sample" id="sample-btn">Carregar dados de exemplo</button>
+        <div id="import-status" class="import-status"></div>
+      </section>
+
+      <section class="panel" id="metric-panel" hidden>
+        <h2>2 · Métrica principal</h2>
+        <div id="metric-options" class="metric-options"></div>
+      </section>
+
+      <section class="panel" id="filter-panel" hidden>
+        <div class="panel-head">
+          <h2>3 · Filtros</h2>
+          <button class="link-btn" id="reset-filters">limpar</button>
+        </div>
+        <div id="filters"></div>
+      </section>
+    </aside>
+
+    <section class="content">
+      <div id="kpi-grid" class="kpi-grid"></div>
+
+      <div class="toolbar">
+        <nav class="tabs" id="tabs"></nav>
+        <div class="export-bar" id="export-bar" hidden>
+          <span>Exportar:</span>
+          <button class="btn btn-export" data-export="csv">CSV</button>
+          <button class="btn btn-export" data-export="xlsx">XLSX</button>
+          <button class="btn btn-export" data-export="pdf">PDF</button>
+        </div>
+      </div>
+
+      <div id="tab-content" class="tab-content"></div>
+    </section>
+  </main>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+
+  <script src="data/municipios.js"></script>
+  <script src="data/brazil-uf.js"></script>
+  <script src="src/utils/Normalizer.js"></script>
+  <script src="src/utils/Formatter.js"></script>
+  <script src="src/utils/MiniZip.js"></script>
+  <script src="src/utils/MiniPdf.js"></script>
+  <script src="src/models/Municipio.js"></script>
+  <script src="src/models/CidadePerformance.js"></script>
+  <script src="src/services/IBGEPopulationService.js"></script>
+  <script src="src/services/GA4ImportService.js"></script>
+  <script src="src/services/CityMatcherService.js"></script>
+  <script src="src/services/AffinityAnalysisService.js"></script>
+  <script src="src/services/ExportService.js"></script>
+  <script src="src/controllers/DashboardController.js"></script>
+  <script src="src/views/DashboardView.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
