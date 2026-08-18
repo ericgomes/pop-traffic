@@ -492,7 +492,7 @@ class DashboardView {
     const px = (v) => pad + ((v - minX) / (maxX - minX || 1)) * (W - pad * 2);
     const py = (v) => H - pad - ((v - minY) / (maxY - minY || 1)) * (H - pad * 2);
     const proportion = this._proportionLine(model, minX, maxX, minY, maxY, px, py);
-    const quadrants = this._quadrants(data, lx, minX, maxX, minY, maxY, px, py, W, H, pad);
+    const quadrants = this._quadrants(data, lx, minX, maxX, minY, maxY, px, py, W, H, pad, model.metric);
     const dots = data.map((p) =>
       '<circle class="scatter-dot" cx="' + sx(p.municipio.population).toFixed(1) + '" cy="' + sy(p.indicators.value).toFixed(1) +
       '" r="' + r(p.indicators.mps).toFixed(1) + '" fill="' + p.indicators.band.color + '" data-tip="' + this._tipFor(p) + '"></circle>').join('');
@@ -529,8 +529,14 @@ class DashboardView {
       '" stroke="#0f172a" stroke-width="2" stroke-dasharray="8 5" opacity="0.75"></line>';
   }
 
-  _quadrants(data, lx, minX, maxX, minY, maxY, px, py, W, H, pad) {
+  _quadrants(data, lx, minX, maxX, minY, maxY, px, py, W, H, pad, metric) {
     if (data.length < 4) return '';
+    const q = {
+      sessoes: { hi: 'muitas sessões', lo: 'poucas sessões' },
+      usuarios: { hi: 'muitos usuários', lo: 'poucos usuários' },
+      conversoes: { hi: 'muitas conversões', lo: 'poucas conversões' },
+      receita: { hi: 'muita receita', lo: 'pouca receita' }
+    }[metric] || { hi: 'muito tráfego', lo: 'pouco tráfego' };
     const mxv = (minX + maxX) / 2;
     const myv = (minY + maxY) / 2;
     const vx = px(mxv), hy = py(myv);
@@ -541,10 +547,10 @@ class DashboardView {
     return line(vx, pad, vx, H - pad) + line(pad, hy, W - pad, hy) +
       '<text x="' + (vx + 4) + '" y="' + (H - pad - 4) + '" fill="#64748b" font-size="9">≈ ' + Formatter.compact(Math.pow(10, mxv)) + ' hab.</text>' +
       '<text x="' + (pad + 4) + '" y="' + (hy - 4) + '" fill="#64748b" font-size="9">≈ ' + Formatter.compact(Math.pow(10, myv)) + '</text>' +
-      label(W - pad - 6, pad + 14, 'end', 'muito tráfego · muita população') +
-      label(pad + 6, pad + 14, 'start', 'muito tráfego · pouca população') +
-      label(W - pad - 6, H - pad - 8, 'end', 'pouco tráfego · muita população') +
-      label(pad + 6, H - pad - 8, 'start', 'pouco tráfego · pouca população');
+      label(W - pad - 6, pad + 14, 'end', q.hi + ' · muita população') +
+      label(pad + 6, pad + 14, 'start', q.hi + ' · pouca população') +
+      label(W - pad - 6, H - pad - 8, 'end', q.lo + ' · muita população') +
+      label(pad + 6, H - pad - 8, 'start', q.lo + ' · pouca população');
   }
 
   _tabMap(model) {
