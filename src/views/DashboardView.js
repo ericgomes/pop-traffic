@@ -25,10 +25,17 @@ class DashboardView {
       c.importText(text);
     });
     document.getElementById('sample-btn').addEventListener('click', () => c.loadSample());
+    document.getElementById('sheet-btn').addEventListener('click', () => c.importFromSheets(document.getElementById('sheet-url').value));
     document.getElementById('reset-filters').addEventListener('click', () => c.resetFilters());
 
     this._restoreSidebar();
     document.getElementById('sidebar-toggle').addEventListener('click', () => this._toggleSidebar());
+
+    const help = document.getElementById('help-modal');
+    document.getElementById('help-btn').addEventListener('click', () => { help.hidden = false; });
+    document.getElementById('help-close').addEventListener('click', () => { help.hidden = true; });
+    help.addEventListener('click', (e) => { if (e.target === help) help.hidden = true; });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') help.hidden = true; });
 
     document.getElementById('tabs').addEventListener('click', (e) => {
       const btn = e.target.closest('button[data-tab]');
@@ -49,15 +56,30 @@ class DashboardView {
     });
 
     document.getElementById('filters').addEventListener('click', (e) => {
+      const allBtn = e.target.closest('[data-all]');
+      if (allBtn) { allBtn.dataset.all === 'uf' ? c.selectAllUfs() : c.selectAllBands(); return; }
+      const bandPreset = e.target.closest('[data-bandpreset]');
+      if (bandPreset) { c.selectBandPreset(bandPreset.dataset.bandpreset); return; }
+      const preset = e.target.closest('.preset-btn');
+      if (preset) { c.applyChannelPreset(preset.dataset.preset); return; }
       const chip = e.target.closest('.uf-chip');
       if (chip) { c.toggleUf(chip.dataset.uf); return; }
+      const band = e.target.closest('.band-chip');
+      if (band) { c.toggleBand(band.dataset.band); return; }
       const seg = e.target.closest('.seg button');
       if (seg) c.updateFilters({ tipo: seg.dataset.tipo });
     });
     document.getElementById('filters').addEventListener('change', (e) => {
+      const med = e.target.closest('input[data-medium]');
+      if (med) { c.toggleMedium(med.dataset.medium); return; }
+      const src = e.target.closest('input[data-source]');
+      if (src) { c.toggleSource(src.dataset.source); return; }
       const input = e.target.closest('input[data-filter]');
       if (input) this._onFilterInput(input);
     });
+
+    document.querySelectorAll('.panel .panel-toggle').forEach((h) =>
+      h.addEventListener('click', () => h.closest('.panel').classList.toggle('collapsed')));
 
     const content = document.getElementById('tab-content');
     content.addEventListener('click', (e) => this._onContentClick(e));
@@ -114,6 +136,8 @@ class DashboardView {
     if (th) { this.controller.setSort(th.dataset.sort); return; }
     const metricBtn = e.target.closest('button[data-mapmetric]');
     if (metricBtn) { this.controller.setMetric(metricBtn.dataset.mapmetric); return; }
+    const modeBtn = e.target.closest('button[data-mapmode]');
+    if (modeBtn) { this.controller.setMapMode(modeBtn.dataset.mapmode); return; }
     const clearBtn = e.target.closest('#clear-corrections');
     if (clearBtn) this.controller.clearCorrections();
   }
@@ -143,12 +167,16 @@ class DashboardView {
     document.getElementById('kpi-grid').innerHTML = '';
     document.getElementById('tab-content').innerHTML =
       '<div class="empty"><div class="big">📊</div><h3>Importe um CSV do Google Analytics 4 para começar</h3>' +
-      '<p class="sub">O sistema cruza o tráfego com a população estimada de 5.571 municípios (IBGE POP2025) e calcula o Market Penetration Score de cada cidade.</p>' +
+      '<p class="sub">O sistema cruza o tráfego com a população estimada de 5.571 municípios (IBGE POP2025) e calcula o Market Share of Voice Score (MSVS) de cada cidade.</p>' +
       '<p class="sub">Use o botão <b>Carregar dados de exemplo</b> para uma demonstração imediata.</p></div>';
   }
 
   showImportError(message) {
     document.getElementById('import-status').innerHTML = '<div class="err">⚠ ' + this._esc(message) + '</div>';
+  }
+
+  showImportInfo(message) {
+    document.getElementById('import-status').innerHTML = '<div style="color:var(--ink-soft)">⏳ ' + this._esc(message) + '</div>';
   }
 
   render(model) {
@@ -179,7 +207,7 @@ class DashboardView {
   }
 
   _renderMetricOptions(model) {
-    const all = ['sessoes', 'engajadas', 'usuarios', 'conversoes', 'receita'];
+    const all = ['sessoes', 'usuarios', 'conversoes', 'receita'];
     const sources = model.sourceHeaders || {};
     document.getElementById('metric-options').innerHTML = all.map((m) => {
       const enabled = model.availableMetrics.indexOf(m) !== -1;
@@ -194,52 +222,116 @@ class DashboardView {
 
   _renderFilters(model) {
     const f = model.filters;
+    const head = (label, allKey) =>
+      '<div class="filter-head"><label>' + label + '</label>' +
+      '<button class="all-btn" data-all="' + allKey + '">Todas</button></div>';
     const chips = model.ufList.map((uf) =>
       '<span class="uf-chip' + (f.ufs.has(uf) ? ' active' : '') + '" data-uf="' + uf + '">' + uf + '</span>').join('');
     const seg = ['todos', 'capital', 'interior'].map((t) =>
       '<button class="' + (f.tipo === t ? 'active' : '') + '" data-tipo="' + t + '">' + (t === 'todos' ? 'Todos' : t === 'capital' ? 'Capitais' : 'Interior') + '</button>').join('');
-    const range = (label, a, b, ap, bp) =>
+    const range = (label, a, b) =>
       '<div class="filter-group"><label>' + label + '</label><div class="range-row">' +
-      '<input type="number" data-filter="' + a + '" placeholder="mín" value="' + (f[a] !== null ? f[a] : '') + '">' +
-      (b ? '<input type="number" data-filter="' + b + '" placeholder="máx" value="' + (f[b] !== null ? f[b] : '') + '">' : '') +
+      '<input type="number" step="any" data-filter="' + a + '" placeholder="mín" value="' + (f[a] !== null ? f[a] : '') + '">' +
+      (b ? '<input type="number" step="any" data-filter="' + b + '" placeholder="máx" value="' + (f[b] !== null ? f[b] : '') + '">' : '') +
       '</div></div>';
+    const bandKeys = Array.from(f.msvsBands).sort().join(',');
+    const top3 = MPS_BANDS.slice(0, 3).map((b) => b.key).sort().join(',');
+    const bot3 = MPS_BANDS.slice(3).map((b) => b.key).sort().join(',');
+    const bandPresets = '<div class="preset-row">' +
+      '<button class="preset-btn' + (bandKeys === top3 ? ' active' : '') + '" data-bandpreset="melhores">🟢 3 melhores</button>' +
+      '<button class="preset-btn' + (bandKeys === bot3 ? ' active' : '') + '" data-bandpreset="piores">🔴 3 piores</button></div>';
+    const dist = this._bandDistribution(model.filtered);
+    const bandChips = MPS_BANDS.map((b) =>
+      '<span class="band-chip' + (f.msvsBands.has(b.key) ? ' active' : '') + '" data-band="' + b.key + '" title="' + b.label + ' (' + b.short + ')">' +
+      '<span class="band-dot" style="background:' + b.color + '"></span>' + b.label +
+      '<span class="band-count">' + (dist.counts[b.key] || 0) + '</span></span>').join('');
     document.getElementById('filters').innerHTML =
-      '<div class="filter-group"><label>UF</label><div class="uf-chips">' + chips + '</div></div>' +
+      '<div class="filter-group">' + head('UF', 'uf') + '<div class="uf-chips">' + chips + '</div></div>' +
       '<div class="filter-group"><label>Capital ou Interior</label><div class="seg">' + seg + '</div></div>' +
+      this._channelFilters(model) +
       range('População', 'popMin', 'popMax') +
-      range('MPS', 'mpsMin', 'mpsMax') +
+      '<div class="filter-group">' + head('Faixa de MSVS', 'band') + bandPresets + '<div class="band-chips">' + bandChips + '</div></div>' +
+      range('MSVS (mín / máx)', 'mpsMin', 'mpsMax') +
       range('Sessões mín.', 'sessoesMin') +
       range('Usuários mín.', 'usuariosMin') +
       range('Conversões mín.', 'conversoesMin') +
       range('Receita mín.', 'receitaMin');
   }
 
+  _channelFilters(model) {
+    const ch = model.channels || { sources: [], mediums: [] };
+    if (!ch.sources.length && !ch.mediums.length) return '';
+    const f = model.filters;
+    const preset = model.channelPreset;
+    const presets = [['organica', 'Orgânica'], ['paga', 'Paga'], ['naopaga', 'Não paga'], ['todas', 'Todas']].map((p) =>
+      '<button class="preset-btn' + (preset === p[0] ? ' active' : '') + '" data-preset="' + p[0] + '">' + p[1] + '</button>').join('');
+    const checks = (key, label, options, selected) => {
+      if (!options.length) return '';
+      const items = options.map((o) =>
+        '<label class="check"><input type="checkbox" data-' + key + '="' + this._attr(o) + '"' + (selected.has(o) ? ' checked' : '') + '> ' + this._esc(o || '(vazio)') + '</label>').join('');
+      return '<div class="sub-label">' + label + '</div><div class="check-list">' + items + '</div>';
+    };
+    return '<div class="filter-group"><label>Canais (source / medium)</label>' +
+      '<div class="preset-row">' + presets + '</div>' +
+      checks('medium', 'Mídia (medium)', ch.mediums, f.mediums) +
+      checks('source', 'Fonte (source)', ch.sources, f.sources) +
+      '</div>';
+  }
+
+  _bandDistribution(list) {
+    const counts = {};
+    for (const b of MPS_BANDS) counts[b.key] = 0;
+    for (const p of list) {
+      const k = p.indicators.band.key;
+      if (counts[k] === undefined) counts[k] = 0;
+      counts[k]++;
+    }
+    return { counts: counts, total: list.length };
+  }
+
+  _bandDistributionHtml(model) {
+    const dist = this._bandDistribution(model.filtered);
+    if (!dist.total) return '';
+    const bar = MPS_BANDS.map((b) => {
+      const pct = dist.total ? (dist.counts[b.key] / dist.total) * 100 : 0;
+      if (pct <= 0) return '';
+      return '<div class="dist-seg" style="width:' + pct.toFixed(2) + '%;background:' + b.color + '" data-tip="' +
+        this._attr('<b>' + b.label + '</b>|' + dist.counts[b.key] + ' cidades · ' + pct.toFixed(1) + '%') + '"></div>';
+    }).join('');
+    const legend = MPS_BANDS.map((b) => {
+      const c = dist.counts[b.key];
+      const pct = dist.total ? (c / dist.total) * 100 : 0;
+      return '<div class="dist-item"><span class="sw" style="background:' + b.color + '"></span>' +
+        '<span class="dist-name">' + b.label + '</span><span class="dist-val"><b>' + c + '</b> · ' + pct.toFixed(1) + '%</span></div>';
+    }).join('');
+    return '<div class="dist-block"><h4 style="margin:0 0 8px;font-size:13px">Distribuição por faixa de MSVS <span class="tag">' + dist.total + ' cidades</span></h4>' +
+      '<div class="dist-bar">' + bar + '</div><div class="dist-legend">' + legend + '</div></div>';
+  }
+
   _renderKpis(model) {
     const s = model.view.summary;
     const has = (m) => model.availableMetrics.indexOf(m) !== -1;
-    const metricCard = (metric, value) => {
+    const item = (lbl, val, sub, cls) =>
+      '<div class="kpi-item ' + (cls || '') + '"><div class="k-lbl">' + lbl + '</div><div class="k-val">' + val +
+      '</div><div class="k-sub">' + this._esc(sub || '') + '</div></div>';
+    const metricItem = (metric, value) => {
       const on = has(metric);
-      return {
-        lbl: Formatter.metricLabel(metric),
-        val: on ? value : '—',
-        sub: on ? 'total' : 'sem dados',
-        cls: on ? '' : 'muted'
-      };
+      return item(Formatter.metricLabel(metric), on ? value : '—', on ? 'total' : 'sem dados', on ? '' : 'muted');
     };
-    const cards = [
-      { lbl: 'Municípios', val: Formatter.integer(s.municipios), sub: 'com tráfego cruzado', cls: '' },
-      { lbl: 'População coberta', val: Formatter.compact(s.population), sub: Formatter.percent(s.coverage, 1) + ' do Brasil', cls: 'accent' },
-      metricCard('sessoes', Formatter.compact(s.totalSessoes)),
-      metricCard('engajadas', Formatter.compact(s.totalEngajadas)),
-      metricCard('usuarios', Formatter.compact(s.totalUsuarios)),
-      metricCard('conversoes', Formatter.compact(s.totalConversoes)),
-      metricCard('receita', Formatter.currency(s.totalReceita)),
-      { lbl: 'Maior MPS', val: s.topCity ? Formatter.mps(s.topCity.indicators.mps) : '—', sub: s.topCity ? s.topCity.municipio.label : '', cls: 'good' },
-      { lbl: 'Menor MPS', val: s.bottomCity ? Formatter.mps(s.bottomCity.indicators.mps) : '—', sub: s.bottomCity ? s.bottomCity.municipio.label : '', cls: 'bad' }
-    ];
-    document.getElementById('kpi-grid').innerHTML = cards.map((k) =>
-      '<div class="kpi ' + k.cls + '"><div class="k-lbl">' + k.lbl + '</div><div class="k-val">' + k.val + '</div><div class="k-sub">' + this._esc(k.sub) + '</div></div>'
-    ).join('');
+    const reachOn = has('usuarios');
+    const groupA = item('Municípios', Formatter.integer(s.municipios), 'com tráfego cruzado') +
+      item('População coberta', Formatter.compact(s.population), Formatter.percent(s.coverage, 1) + ' do Brasil', 'accent') +
+      item('Alcance', reachOn ? Formatter.percent(s.reach, 2) : '—', 'usuários / população', reachOn ? '' : 'muted');
+    const groupB = metricItem('sessoes', Formatter.compact(s.totalSessoes)) +
+      metricItem('usuarios', Formatter.compact(s.totalUsuarios)) +
+      metricItem('conversoes', Formatter.compact(s.totalConversoes)) +
+      metricItem('receita', Formatter.currency(s.totalReceita));
+    const groupC = item('Menor MSVS', s.bottomCity ? Formatter.mps(s.bottomCity.indicators.mps) : '—', s.bottomCity ? s.bottomCity.municipio.label : '', 'bad') +
+      item('Maior MSVS', s.topCity ? Formatter.mps(s.topCity.indicators.mps) : '—', s.topCity ? s.topCity.municipio.label : '', 'good');
+    document.getElementById('kpi-grid').innerHTML =
+      '<div class="kpi-group cobertura">' + groupA + '</div>' +
+      '<div class="kpi-group trafego">' + groupB + '</div>' +
+      '<div class="kpi-group msvs">' + groupC + '</div>';
   }
 
   _renderTabs(model) {
@@ -278,8 +370,9 @@ class DashboardView {
     const insights = model.view.insights.slice(0, 4).map((i) =>
       '<div class="insight ' + i.type + '"><div class="ic-city">' + this._esc(i.city) + '</div>' + this._esc(i.text) + '</div>').join('');
     return '<h3>Dashboard executivo</h3><p class="sub">Visão consolidada da performance digital proporcional à população — métrica: <b>' + Formatter.metricLabel(model.metric) + '</b>.</p>' +
+      this._bandDistributionHtml(model) +
       '<div class="ranking-grid">' +
-      '<div class="rank-card"><h4>🚀 Top 10 destaques (maior MPS)</h4><ul class="rank-list">' + high + '</ul></div>' +
+      '<div class="rank-card"><h4>🚀 Top 10 destaques (maior MSVS)</h4><ul class="rank-list">' + high + '</ul></div>' +
       '<div class="rank-card"><h4>🎯 Top 10 oportunidades (baixa presença x população)</h4><ul class="rank-list">' + opp + '</ul></div>' +
       '</div><h4 style="margin:20px 0 10px;font-size:14px">Insights automáticos</h4><div class="insights-grid">' + insights + '</div>';
   }
@@ -292,31 +385,40 @@ class DashboardView {
   }
 
   _tabTable(model) {
+    const hasOrigin = model.filtered.some((p) => p.hasChannel);
     const cols = [
       { key: 'name', label: 'Município', left: true },
-      { key: 'uf', label: 'UF', left: true },
+      { key: 'uf', label: 'UF', left: true }
+    ];
+    if (hasOrigin) cols.push({ key: 'origem', label: 'Origem', left: true, noSort: true });
+    cols.push(
       { key: 'population', label: 'População' },
       { key: 'value', label: Formatter.metricLabel(model.metric) },
       { key: 'per100k', label: '/100k hab' },
       { key: 'metricShare', label: '% métrica' },
       { key: 'popShare', label: '% pop' },
-      { key: 'mps', label: 'MPS' }
-    ];
+      { key: 'reach', label: 'Alcance' },
+      { key: 'mps', label: 'MSVS' }
+    );
     const head = cols.map((c) => {
+      if (c.noSort) return '<th class="' + (c.left ? 'left' : '') + '">' + c.label + '</th>';
       const sorted = model.sort.key === c.key;
       const arrow = sorted ? (model.sort.dir === 'desc' ? ' ↓' : ' ↑') : '';
       return '<th data-sort="' + c.key + '" class="' + (c.left ? 'left ' : '') + (sorted ? 'sorted' : '') + '">' + c.label + arrow + '</th>';
     }).join('');
     const body = model.sortedRows.map((p) => {
       const ind = p.indicators;
+      const originTd = hasOrigin ? '<td class="left">' + this._esc(p.originLabel || '—') + '</td>' : '';
       return '<tr><td class="left" data-tip="' + this._tipFor(p) + '">' + this._esc(p.municipio.name) +
         ' <span class="tag' + (p.municipio.isCapital ? ' cap' : '') + '">' + (p.municipio.isCapital ? 'capital' : 'interior') + '</span></td>' +
         '<td class="left">' + p.municipio.uf + '</td>' +
+        originTd +
         '<td>' + Formatter.integer(p.municipio.population) + '</td>' +
         '<td>' + Formatter.metricValue(model.metric, ind.value) + '</td>' +
         '<td>' + Formatter.decimal(ind.per100k, 1) + '</td>' +
         '<td>' + Formatter.percent(ind.metricShare, 2) + '</td>' +
         '<td>' + Formatter.percent(ind.popShare, 2) + '</td>' +
+        '<td>' + Formatter.percent(ind.reach, 2) + '</td>' +
         '<td><span class="pill" style="background:' + ind.band.color + '">' + Formatter.mps(ind.mps) + '</span></td></tr>';
     }).join('');
     return '<h3>Tabela completa</h3><p class="sub">' + Formatter.integer(model.filtered.length) + ' municípios · clique nos cabeçalhos para ordenar.</p>' +
@@ -325,22 +427,27 @@ class DashboardView {
 
   _tabRanking(model) {
     const c = model.view.classifications;
-    const blocks = [
-      { t: '🏆 Top cidades por MPS', list: c.topMps, fmt: (p) => Formatter.mps(p.indicators.mps) },
-      { t: '📉 Piores cidades por MPS', list: c.bottomMps, fmt: (p) => Formatter.mps(p.indicators.mps) },
-      { t: '🏙️ Top capitais', list: c.topCapitais, fmt: (p) => Formatter.mps(p.indicators.mps) },
-      { t: '🌄 Top interior', list: c.topInterior, fmt: (p) => Formatter.mps(p.indicators.mps) },
-      { t: '⚡ Acima de 2× o esperado', list: c.above2x, fmt: (p) => Formatter.mps(p.indicators.mps) },
-      { t: '🔥 Acima de 5× o esperado', list: c.above5x, fmt: (p) => Formatter.mps(p.indicators.mps) },
-      { t: '🎯 Top oportunidades', list: c.opportunities, fmt: (p) => Formatter.mps(p.indicators.mps) },
-      { t: '💰 Top receita proporcional', list: c.topReceita, fmt: (p) => Formatter.currency(p.indicators.receitaPer100k) + '/100k' }
-    ];
-    const cards = blocks.map((b) => {
+    const mps = (p) => Formatter.mps(p.indicators.mps);
+    const card = (b) => {
       const items = b.list.slice(0, 12).map((p, i) => this._miniRow(i, p, b.fmt(p))).join('') ||
         '<li style="color:var(--ink-soft)">sem municípios nesta faixa</li>';
-      return '<div class="rank-card"><h4>' + b.t + ' <span class="tag">' + b.list.length + '</span></h4><ul class="rank-list">' + items + '</ul></div>';
-    }).join('');
-    return '<h3>Classificações</h3><p class="sub">Rankings por Market Penetration Score — métrica: <b>' + Formatter.metricLabel(model.metric) + '</b>.</p><div class="ranking-grid">' + cards + '</div>';
+      return '<div class="rank-card ' + (b.cls || '') + '"><h4>' + b.t + ' <span class="tag">' + b.list.length + '</span></h4><ul class="rank-list">' + items + '</ul></div>';
+    };
+    const topMps = card({ t: '🏆 Maior MSVS', list: c.topMps, fmt: mps, cls: 'rank-top' });
+    const bottomMps = card({ t: '📉 Menor MSVS', list: c.bottomMps, fmt: mps, cls: 'rank-bottom' });
+    const rest = [
+      { t: '🏙️ Top capitais', list: c.topCapitais, fmt: mps },
+      { t: '🌄 Top interior', list: c.topInterior, fmt: mps },
+      { t: '⚡ Acima de 2× o esperado', list: c.above2x, fmt: mps },
+      { t: '🔥 Acima de 5× o esperado', list: c.above5x, fmt: mps },
+      { t: '🎯 Top oportunidades', list: c.opportunities, fmt: mps },
+      { t: '💰 Top receita proporcional', list: c.topReceita, fmt: (p) => Formatter.currency(p.indicators.receitaPer100k) + '/100k' }
+    ].map(card).join('');
+    return '<h3>Classificações</h3><p class="sub">Rankings por Market Share of Voice Score — métrica: <b>' + Formatter.metricLabel(model.metric) + '</b>.</p>' +
+      '<div class="rank-extremes"><div class="rank-col rank-col-top"><div class="rank-col-label">▲ Melhores</div>' + topMps + '</div>' +
+      '<div class="rank-col rank-col-bottom"><div class="rank-col-label">▼ Piores</div>' + bottomMps + '</div></div>' +
+      '<div class="rank-divider">Outras classificações</div>' +
+      '<div class="ranking-grid">' + rest + '</div>';
   }
 
   _tabBars(model) {
@@ -354,19 +461,18 @@ class DashboardView {
         '<div class="bar-track"><div class="bar-fill" style="width:' + w + '%;background:' + p.indicators.band.color + '"></div></div>' +
         '<div style="text-align:right;font-weight:700">' + Formatter.mps(p.indicators.mps) + '</div></div>';
     }).join('');
-    return '<h3>Top 25 cidades por MPS</h3><p class="sub">Quanto maior a barra, maior a presença digital proporcional à população.</p>' +
+    return '<h3>Top 25 cidades por MSVS</h3><p class="sub">Quanto maior a barra, maior a presença digital proporcional à população.</p>' +
       this._bandLegend() + '<div class="bars">' + rows + '</div>';
   }
 
   _tabHeatmap(model) {
-    const list = model.view.classifications.topMps.slice(0, 120);
+    const list = model.view.sorted;
     if (!list.length) return '<h3>Heatmap</h3><p class="sub">Sem dados.</p>';
-    const cols = Math.min(12, Math.ceil(Math.sqrt(list.length)) + 3);
     const cells = list.map((p) =>
       '<div class="heat-cell" data-tip="' + this._tipFor(p) + '" style="background:' + p.indicators.band.color + '">' +
       '<span>' + this._esc(this._abbr(p.municipio.name)) + '<br>' + Formatter.mps(p.indicators.mps) + '</span></div>').join('');
-    return '<h3>Heatmap de MPS</h3><p class="sub">As ' + list.length + ' cidades de maior MPS, coloridas pela faixa de performance.</p>' +
-      this._bandLegend() + '<div class="heatmap" style="grid-template-columns:repeat(' + cols + ',1fr)">' + cells + '</div>';
+    return '<h3>Heatmap de MSVS</h3><p class="sub">Todas as ' + Formatter.integer(list.length) + ' cidades filtradas, ordenadas por MSVS e coloridas pela faixa de performance.</p>' +
+      this._bandLegend() + '<div class="heatmap heatmap-auto">' + cells + '</div>';
   }
 
   _tabScatter(model) {
@@ -383,6 +489,10 @@ class DashboardView {
     const sx = (v) => pad + ((lx(v) - minX) / (maxX - minX || 1)) * (W - pad * 2);
     const sy = (v) => H - pad - ((lx(v) - minY) / (maxY - minY || 1)) * (H - pad * 2);
     const r = (m) => 4 + Math.sqrt(Math.max(0, m) / maxMps) * 22;
+    const px = (v) => pad + ((v - minX) / (maxX - minX || 1)) * (W - pad * 2);
+    const py = (v) => H - pad - ((v - minY) / (maxY - minY || 1)) * (H - pad * 2);
+    const proportion = this._proportionLine(model, minX, maxX, minY, maxY, px, py);
+    const quadrants = this._quadrants(data, lx, minX, maxX, minY, maxY, px, py, W, H, pad);
     const dots = data.map((p) =>
       '<circle class="scatter-dot" cx="' + sx(p.municipio.population).toFixed(1) + '" cy="' + sy(p.indicators.value).toFixed(1) +
       '" r="' + r(p.indicators.mps).toFixed(1) + '" fill="' + p.indicators.band.color + '" data-tip="' + this._tipFor(p) + '"></circle>').join('');
@@ -397,17 +507,50 @@ class DashboardView {
         '<text x="' + (pad - 8) + '" y="' + (y + 3) + '" text-anchor="end">' + Formatter.compact(Math.pow(10, t)) + '</text>';
     }).join('');
     return '<h3>Scatter Plot — População × ' + Formatter.metricLabel(model.metric) + '</h3>' +
-      '<p class="sub">Eixos em escala logarítmica. Tamanho da bolha = MPS · cor = faixa de performance.</p>' + this._bandLegend() +
+      '<p class="sub">Escala logarítmica. Bolha = MSVS · cor = faixa · <b>linha diagonal</b> = proporção exata (MSVS = 1, %métrica = %população) · <b>cruz pontilhada</b> = mediana (4 quadrantes).</p>' + this._bandLegend() +
       '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '">' + gx + gy +
       '<text x="' + (W / 2) + '" y="' + (H - 12) + '" text-anchor="middle">População estimada 2025</text>' +
       '<text x="16" y="' + (H / 2) + '" text-anchor="middle" transform="rotate(-90 16 ' + (H / 2) + ')">' + Formatter.metricLabel(model.metric) + '</text>' +
-      dots + '</svg>';
+      dots + proportion + quadrants + '</svg>';
+  }
+
+  _proportionLine(model, minX, maxX, minY, maxY, px, py) {
+    const totals = model.analysisTotals;
+    if (!totals || !totals.population) return '';
+    const k = (totals.metric[model.metric] || 0) / totals.population;
+    if (k <= 0) return '';
+    const logK = Math.log10(k);
+    let ax = minX, ay = minX + logK;
+    let bx = maxX, by = maxX + logK;
+    if (ay < minY) { ax = minY - logK; ay = minY; } else if (ay > maxY) { ax = maxY - logK; ay = maxY; }
+    if (by < minY) { bx = minY - logK; by = minY; } else if (by > maxY) { bx = maxY - logK; by = maxY; }
+    if (ax < minX) ax = minX; if (bx > maxX) bx = maxX;
+    return '<line x1="' + px(ax).toFixed(1) + '" y1="' + py(ay).toFixed(1) + '" x2="' + px(bx).toFixed(1) + '" y2="' + py(by).toFixed(1) +
+      '" stroke="#0f172a" stroke-width="2" stroke-dasharray="8 5" opacity="0.75"></line>';
+  }
+
+  _quadrants(data, lx, minX, maxX, minY, maxY, px, py, W, H, pad) {
+    if (data.length < 4) return '';
+    const mxv = (minX + maxX) / 2;
+    const myv = (minY + maxY) / 2;
+    const vx = px(mxv), hy = py(myv);
+    const line = (x1, y1, x2, y2) =>
+      '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="' + y2.toFixed(1) + '" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 5" opacity="0.75"></line>';
+    const label = (x, y, anchor, t) =>
+      '<text x="' + x + '" y="' + y + '" text-anchor="' + anchor + '" fill="#94a3b8" font-size="10" font-style="italic">' + t + '</text>';
+    return line(vx, pad, vx, H - pad) + line(pad, hy, W - pad, hy) +
+      '<text x="' + (vx + 4) + '" y="' + (H - pad - 4) + '" fill="#64748b" font-size="9">≈ ' + Formatter.compact(Math.pow(10, mxv)) + ' hab.</text>' +
+      '<text x="' + (pad + 4) + '" y="' + (hy - 4) + '" fill="#64748b" font-size="9">≈ ' + Formatter.compact(Math.pow(10, myv)) + '</text>' +
+      label(W - pad - 6, pad + 14, 'end', 'muito tráfego · muita população') +
+      label(pad + 6, pad + 14, 'start', 'muito tráfego · pouca população') +
+      label(W - pad - 6, H - pad - 8, 'end', 'pouco tráfego · muita população') +
+      label(pad + 6, H - pad - 8, 'start', 'pouco tráfego · pouca população');
   }
 
   _tabMap(model) {
     const geo = model.geo;
     if (!geo) return '<h3>Mapa</h3><p class="sub">Geometria indisponível.</p>';
-    const agg = this._aggregateByUf(model.filtered, model.metric);
+    const mode = model.mapMode === 'cidade' ? 'cidade' : 'uf';
     let minLon = 999, maxLon = -999, minLat = 999, maxLat = -999;
     geo.forEach((f) => f.polys.forEach((poly) => poly.forEach((pt) => {
       if (pt[0] < minLon) minLon = pt[0];
@@ -421,43 +564,64 @@ class DashboardView {
     const ox = (W - spanLon * scale) / 2, oy = (H - spanLat * scale) / 2;
     const px = (lon) => ox + (lon - minLon) * scale;
     const py = (lat) => H - oy - (lat - minLat) * scale;
-    const paths = geo.map((f) => {
-      const a = agg[f.sigla];
-      const color = a && a.mps > 0 ? CidadePerformance.bandFor(a.mps).color : '#e2e8f0';
-      const tip = a ? '<b>' + f.name + ' (' + f.sigla + ')</b>|MPS ' + Formatter.mps(a.mps) + ' · ' + a.count + ' mun.|' +
-        Formatter.metricLabel(model.metric) + ': ' + Formatter.compact(a.metric) + '|Pop: ' + Formatter.compact(a.pop) :
-        '<b>' + f.name + ' (' + f.sigla + ')</b>|sem dados';
-      const d = f.polys.map((poly) => 'M' + poly.map((pt) => px(pt[0]).toFixed(1) + ' ' + py(pt[1]).toFixed(1)).join('L') + 'Z').join(' ');
-      return '<path class="map-uf" d="' + d + '" fill="' + color + '" data-tip="' + this._attr(tip) + '"></path>';
-    }).join('');
+
+    let layer, subtitle;
+    if (mode === 'cidade') {
+      const outline = geo.map((f) =>
+        '<path class="map-base" d="' + f.polys.map((poly) => 'M' + poly.map((pt) => px(pt[0]).toFixed(1) + ' ' + py(pt[1]).toFixed(1)).join('L') + 'Z').join(' ') + '"></path>').join('');
+      const cityGeo = model.cityGeo || {};
+      const cities = model.filtered.filter((p) => cityGeo[p.municipio.code] && p.indicators.value > 0);
+      const maxVal = Math.max(1, cities.reduce((mx, p) => Math.max(mx, p.indicators.value), 0));
+      const dots = cities
+        .slice().sort((a, b) => b.indicators.value - a.indicators.value)
+        .map((p) => {
+          const c = cityGeo[p.municipio.code];
+          const rr = (2.5 + Math.sqrt(p.indicators.value / maxVal) * 17).toFixed(1);
+          return '<circle class="map-city" cx="' + px(c[0]).toFixed(1) + '" cy="' + py(c[1]).toFixed(1) + '" r="' + rr +
+            '" fill="' + p.indicators.band.color + '" data-tip="' + this._tipFor(p) + '"></circle>';
+        }).join('');
+      layer = outline + dots;
+      subtitle = Formatter.integer(cities.length) + ' municípios plotados por centróide · tamanho = ' + Formatter.metricLabel(model.metric) + ' · cor = faixa de MSVS.';
+    } else {
+      const agg = this._aggregateByUf(model.filtered, model.metric);
+      layer = geo.map((f) => {
+        const a = agg[f.sigla];
+        const color = a && a.mps > 0 ? CidadePerformance.bandFor(a.mps).color : '#e2e8f0';
+        const tip = a ? '<b>' + f.name + ' (' + f.sigla + ')</b>|MSVS ' + Formatter.mps(a.mps) + ' · ' + a.count + ' mun.|' +
+          Formatter.metricLabel(model.metric) + ': ' + Formatter.compact(a.metric) + '|Pop: ' + Formatter.compact(a.pop) :
+          '<b>' + f.name + ' (' + f.sigla + ')</b>|sem dados';
+        const d = f.polys.map((poly) => 'M' + poly.map((pt) => px(pt[0]).toFixed(1) + ' ' + py(pt[1]).toFixed(1)).join('L') + 'Z').join(' ');
+        return '<path class="map-uf" d="' + d + '" fill="' + color + '" data-tip="' + this._attr(tip) + '"></path>';
+      }).join('');
+      subtitle = 'Cada estado é colorido pelo MSVS médio (ponderado por população) dos municípios filtrados.';
+    }
+
+    const modeBtns = [['uf', 'Por UF'], ['cidade', 'Por cidade']].map((m) =>
+      '<button class="btn ' + (mode === m[0] ? 'btn-export' : 'btn-secondary') + '" data-mapmode="' + m[0] + '" style="margin:0">' + m[1] + '</button>').join(' ');
     const metricBtns = ['sessoes', 'usuarios', 'conversoes', 'receita'].map((m) => {
       const on = m === model.metric;
       const enabled = model.availableMetrics.indexOf(m) !== -1;
       return '<button class="btn ' + (on ? 'btn-export' : 'btn-secondary') + '" data-mapmetric="' + m + '"' + (enabled ? '' : ' disabled') + ' style="margin:0">' + Formatter.metricLabel(m) + '</button>';
     }).join(' ');
-    return '<h3>Mapa do Brasil — MPS por UF</h3><p class="sub">Cada estado é colorido pelo MPS agregado dos municípios filtrados. Alterne a métrica:</p>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' + metricBtns + '</div>' + this._bandLegend() +
-      '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:680px;margin:auto">' + paths + '</svg>';
+    return '<h3>Mapa do Brasil — MSVS ' + (mode === 'cidade' ? 'por cidade' : 'por UF') + '</h3><p class="sub">' + subtitle + '</p>' +
+      '<div class="map-controls"><div class="map-seg">' + modeBtns + '</div><div class="map-seg">' + metricBtns + '</div></div>' + this._bandLegend() +
+      '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:700px;margin:auto">' + layer + '</svg>';
   }
 
   _aggregateByUf(list, metric) {
-    let totalMetric = 0, totalPop = 0;
     const byUf = {};
     for (const p of list) {
       const uf = p.municipio.uf;
-      if (!byUf[uf]) byUf[uf] = { metric: 0, pop: 0, count: 0 };
-      byUf[uf].metric += p.metricValue(metric);
+      if (!byUf[uf]) byUf[uf] = { wsum: 0, pop: 0, metric: 0, count: 0 };
+      byUf[uf].wsum += p.indicators.mps * p.municipio.population;
       byUf[uf].pop += p.municipio.population;
+      byUf[uf].metric += p.metricValue(metric);
       byUf[uf].count++;
-      totalMetric += p.metricValue(metric);
-      totalPop += p.municipio.population;
     }
     const out = {};
     for (const uf of Object.keys(byUf)) {
       const a = byUf[uf];
-      const ms = totalMetric ? a.metric / totalMetric : 0;
-      const ps = totalPop ? a.pop / totalPop : 0;
-      out[uf] = { metric: a.metric, pop: a.pop, count: a.count, mps: ps ? ms / ps : 0 };
+      out[uf] = { metric: a.metric, pop: a.pop, count: a.count, mps: a.pop ? a.wsum / a.pop : 0 };
     }
     return out;
   }
@@ -467,7 +631,7 @@ class DashboardView {
     if (!insights.length) return '<h3>Insights automáticos</h3><p class="sub">Sem insights para o recorte atual.</p>';
     const cards = insights.map((i) =>
       '<div class="insight ' + i.type + '"><div class="ic-city">' + this._esc(i.city) + '</div>' + this._esc(i.text) + '</div>').join('');
-    return '<h3>Insights automáticos</h3><p class="sub">Frases geradas a partir do MPS e das participações de cada município.</p>' +
+    return '<h3>Insights automáticos</h3><p class="sub">Frases geradas a partir do MSVS e das participações de cada município.</p>' +
       '<div class="insights-grid">' + cards + '</div>';
   }
 
@@ -553,11 +717,13 @@ class DashboardView {
 
   _tipFor(p) {
     const ind = p.indicators;
+    const origin = p.hasChannel ? '|Origem: ' + p.originLabel : '';
     const txt = '<b>' + p.municipio.label + '</b>' +
       '|Pop: ' + Formatter.integer(p.municipio.population) +
-      '|MPS: ' + Formatter.mps(ind.mps) + ' — ' + ind.band.label +
+      '|MSVS: ' + Formatter.mps(ind.mps) + ' — ' + ind.band.label +
       '|' + Formatter.metricLabel(ind.metric) + ': ' + Formatter.integer(ind.value) +
-      '|% métrica ' + Formatter.percent(ind.metricShare, 2) + ' · % pop ' + Formatter.percent(ind.popShare, 2);
+      '|% métrica ' + Formatter.percent(ind.metricShare, 2) + ' · % pop ' + Formatter.percent(ind.popShare, 2) +
+      origin;
     return this._attr(txt);
   }
 

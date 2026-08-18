@@ -31,7 +31,7 @@ class GA4ImportService {
       if (!row.cidade) continue;
       rows.push(row);
     }
-    const metrics = ['sessoes', 'engajadas', 'usuarios', 'conversoes', 'receita'].filter(
+    const metrics = ['sessoes', 'usuarios', 'conversoes', 'receita'].filter(
       (m) => fields[m] !== undefined && rows.some((r) => r[m] > 0)
     );
     const sourceHeaders = {};
@@ -127,12 +127,29 @@ class GA4ImportService {
       cidade: Normalizer.cleanSpaces(get('cidade')),
       estado: Normalizer.cleanSpaces(get('estado')),
       codigo: Normalizer.cleanSpaces(get('codigo')),
+      source: this._source(get('source'), get('sourcemedium')),
+      medium: this._medium(get('medium'), get('sourcemedium')),
       sessoes: this._number(get('sessoes')),
       engajadas: this._number(get('engajadas')),
       usuarios: this._number(get('usuarios')),
       conversoes: this._number(get('conversoes')),
       receita: this._number(get('receita'))
     };
+  }
+
+  _source(source, combined) {
+    const s = Normalizer.cleanSpaces(source);
+    if (s) return s;
+    const c = Normalizer.cleanSpaces(combined);
+    return c ? c.split('/')[0].trim() : '';
+  }
+
+  _medium(medium, combined) {
+    const m = Normalizer.cleanSpaces(medium);
+    if (m) return m;
+    const c = Normalizer.cleanSpaces(combined);
+    const parts = c.split('/');
+    return parts.length > 1 ? parts.slice(1).join('/').trim() : '';
   }
 
   _number(value) {
@@ -164,6 +181,9 @@ GA4ImportService.FIELD_DEFS = [
   { field: 'codigo', aliases: ['codigo ibge', 'cod ibge', 'ibge', 'codigo municipio', 'cod municipio'] },
   { field: 'cidade', aliases: ['cidade', 'municipio', 'city', 'town', 'localidade', 'town city'] },
   { field: 'estado', aliases: ['estado', 'state', 'uf', 'regiao', 'region', 'provincia'] },
+  { field: 'sourcemedium', aliases: ['source medium', 'session source medium', 'first user source medium', 'origem midia'] },
+  { field: 'source', aliases: ['session source', 'first user source', 'source', 'origem', 'fonte'] },
+  { field: 'medium', aliases: ['session medium', 'first user medium', 'medium', 'midia', 'meio'] },
   { field: 'engajadas', aliases: ['sessoes engajadas', 'sessao engajada', 'engaged sessions', 'engaged session'] },
   { field: 'sessoes', aliases: ['sessoes', 'sessao', 'sessions', 'session', 'visitas'] },
   { field: 'usuarios', aliases: ['usuarios', 'usuario', 'users', 'user', 'total users', 'active users', 'visitantes'] },

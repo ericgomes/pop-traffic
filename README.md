@@ -1,6 +1,6 @@
-# pop-traffic — Análise Geográfica de Tráfego (MPS)
+# Cidades — Análise Geográfica de Tráfego (MSVS)
 
-Webapp client-side que cruza dados do **Google Analytics 4** com as **Estimativas da População Residente nos Municípios Brasileiros (IBGE POP2025, ref. 01/07/2025)** e calcula o **Market Penetration Score (MPS)** de cada cidade — revelando onde a marca performa acima ou abaixo do esperado para o tamanho da população, eliminando o viés das capitais.
+Webapp client-side que cruza dados do **Google Analytics 4** com as **Estimativas da População Residente nos Municípios Brasileiros (IBGE POP2025, ref. 01/07/2025)** e calcula o **Market Share of Voice Score (MSVS)** de cada cidade — revelando onde a marca performa acima ou abaixo do esperado para o tamanho da população, eliminando o viés das capitais.
 
 ## Como rodar
 
@@ -18,8 +18,9 @@ Clique em **Carregar dados de exemplo** para uma demonstração, ou em **Selecio
 Aceita o CSV nativo do GA4 (ex.: *Detalhes demográficos: País*) — ignora as linhas de comentário, detecta o cabeçalho em inglês ou português e mapeia automaticamente as colunas:
 
 ```
-City → cidade · Region → estado · Total users → usuários
+City → cidade · Region → estado · Total users → usuários · Engaged sessions → sessões engajadas
 Sessions → sessões · Ecommerce purchases → conversões · Total revenue → receita
+Source / Medium → origem (opcionais)
 ```
 
 Tráfego estrangeiro / `(not set)` é identificado e excluído do cálculo; a qualidade do match é medida pela **cobertura da métrica**, não pelo número de linhas.
@@ -28,9 +29,9 @@ Tráfego estrangeiro / `(not set)` é identificado e excluído do cálculo; a qu
 
 - Métrica por habitante, por mil e por 100 mil habitantes
 - Participação da métrica e participação populacional
-- **MPS = % da métrica / % da população**
+- **MSVS = % da métrica / % da população**
 
-| Faixa MPS | Interpretação |
+| Faixa MSVS | Interpretação |
 |---|---|
 | < 0,5 | Muito abaixo do esperado |
 | 0,5 – 0,9 | Abaixo do esperado |
@@ -41,7 +42,7 @@ Tráfego estrangeiro / `(not set)` é identificado e excluído do cálculo; a qu
 
 ## Recursos
 
-Dashboard executivo · Tabela ordenável · Rankings · Gráfico de barras · Heatmap · Scatter plot · Mapa do Brasil (choropleth por UF) · Insights automáticos · Filtros (UF, capital/interior, população, MPS, mínimos por métrica) · Correção manual de match (salva em `localStorage`) · Exportação **CSV / XLSX / PDF** (geradas offline, sem dependências).
+Dashboard executivo · Tabela ordenável · Rankings · Gráfico de barras · Heatmap · Scatter plot com linha de tendência · Mapa do Brasil (choropleth por UF) · Insights automáticos · Filtros (UF, capital/interior, população, MSVS, mínimos por métrica) · Correção manual de match (salva em `localStorage`) · Exportação **CSV / XLSX / PDF** (geradas offline, sem dependências).
 
 ## Arquitetura
 

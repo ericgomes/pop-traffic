@@ -27,7 +27,33 @@ class CidadePerformance {
       }
     }
     this.sources = [];
+    this.channelSources = new Set();
+    this.channelMediums = new Set();
     this.indicators = null;
+  }
+
+  addChannel(source, medium) {
+    if (source) this.channelSources.add(source);
+    if (medium) this.channelMediums.add(medium);
+  }
+
+  get hasChannel() {
+    return this.channelSources.size > 0 || this.channelMediums.size > 0;
+  }
+
+  get sourceLabel() {
+    return Array.from(this.channelSources).join(', ');
+  }
+
+  get mediumLabel() {
+    return Array.from(this.channelMediums).join(', ');
+  }
+
+  get originLabel() {
+    const s = this.sourceLabel;
+    const m = this.mediumLabel;
+    if (s && m) return s + ' / ' + m;
+    return s || m || '';
   }
 
   addMetrics(metrics) {
@@ -52,6 +78,7 @@ class CidadePerformance {
     const popShare = popTotal ? pop / popTotal : 0;
     const mps = popShare ? metricShare / popShare : 0;
     const receitaPerCapita = pop ? this.metrics.receita / pop : 0;
+    const reach = pop ? this.metrics.usuarios / pop : 0;
     this.indicators = {
       metric: metric,
       value: value,
@@ -62,6 +89,7 @@ class CidadePerformance {
       metricShare: metricShare,
       popShare: popShare,
       mps: mps,
+      reach: reach,
       opportunityGap: popShare - metricShare,
       receitaPerCapita: receitaPerCapita,
       receitaPer100k: receitaPerCapita * 100000,

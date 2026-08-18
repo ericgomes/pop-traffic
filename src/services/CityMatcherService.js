@@ -149,6 +149,7 @@ class CityMatcherService {
       byCode.set(municipio.code, perf);
     }
     perf.addMetrics(row);
+    perf.addChannel(row.source, row.medium);
     perf.sources.push(row);
   }
 }

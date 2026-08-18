@@ -66,6 +66,7 @@ class AffinityAnalysisService {
       population: totals.population,
       nationalPopulation: national,
       coverage: national ? totals.population / national : 0,
+      reach: totals.population ? totals.metric.usuarios / totals.population : 0,
       totalSessoes: totals.metric.sessoes,
       totalEngajadas: totals.metric.engajadas,
       totalUsuarios: totals.metric.usuarios,
@@ -87,7 +88,7 @@ class AffinityAnalysisService {
       insights.push({
         type: 'destaque',
         city: top.municipio.label,
-        text: top.municipio.name + ' apresenta Market Penetration Score de ' + Formatter.mps(top.indicators.mps) +
+        text: top.municipio.name + ' apresenta Market Share of Voice Score de ' + Formatter.mps(top.indicators.mps) +
           ', indicando presença digital muito acima do esperado para sua população.'
       });
     }

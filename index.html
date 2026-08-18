@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cidades · Análise de tráfego GA4 × IBGE (MPS)</title>
+  <title>Cidades · Análise de tráfego GA4 × IBGE (MSVS)</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="app-header">
     <div class="brand">
-      <div class="brand-mark">MPS</div>
+      <div class="brand-mark">MSVS</div>
       <div>
         <h1>Cidades</h1>
-        <p>Análise geográfica de tráfego · MPS · IBGE POP2025 + Google Analytics 4</p>
+        <p>Análise geográfica de tráfego · MSVS · IBGE POP2025 + Google Analytics 4</p>
       </div>
     </div>
     <div id="base-summary" class="base-summary"></div>
@@ -27,15 +27,23 @@
         </svg>
       </button>
       <section class="panel" id="import-panel">
-        <h2>1 · Importar GA4</h2>
-        <p class="hint">CSV exportado do GA4. Colunas opcionais: <code>cidade, estado, sessoes, usuarios, conversoes, receita</code>.</p>
+        <div class="panel-head">
+          <h2 class="panel-toggle">1 · Importar GA4<span class="chev">▾</span></h2>
+          <button class="link-btn" id="help-btn" type="button">Ajuda</button>
+        </div>
+        <p class="hint">CSV exportado do GA4. Colunas opcionais: <code>cidade, estado, sessoes, usuarios, conversoes, receita, source, medium</code>.</p>
         <label class="file-drop" id="file-label">
           <input type="file" id="file-input" accept=".csv,text/csv,text/plain" hidden>
           <span>Selecionar arquivo CSV</span>
         </label>
         <details class="paste-block">
+          <summary>ou ler do Google Sheets</summary>
+          <input type="text" id="sheet-url" class="sheet-input" placeholder="Cole o link da planilha (compartilhada com 'qualquer pessoa com o link')">
+          <button class="btn btn-secondary" id="sheet-btn">Importar do Sheets</button>
+        </details>
+        <details class="paste-block">
           <summary>ou colar dados</summary>
-          <textarea id="paste-area" rows="6" placeholder="cidade,estado,sessoes,usuarios,conversoes,receita&#10;São Paulo,São Paulo,50000,38000,1200,350000"></textarea>
+          <textarea id="paste-area" rows="6" placeholder="cidade,estado,sessoes,usuarios,conversoes,receita,source,medium&#10;São Paulo,São Paulo,50000,38000,1200,350000,google,organic&#10;Campinas,São Paulo,8000,6200,240,95000,google,cpc"></textarea>
           <button class="btn btn-secondary" id="paste-btn">Processar texto</button>
         </details>
         <button class="btn btn-sample" id="sample-btn">Carregar dados de exemplo</button>
@@ -43,13 +51,13 @@
       </section>
 
       <section class="panel" id="metric-panel" hidden>
-        <h2>2 · Métrica principal</h2>
+        <h2 class="panel-toggle">2 · Métrica principal<span class="chev">▾</span></h2>
         <div id="metric-options" class="metric-options"></div>
       </section>
 
       <section class="panel" id="filter-panel" hidden>
         <div class="panel-head">
-          <h2>3 · Filtros</h2>
+          <h2 class="panel-toggle">3 · Filtros<span class="chev">▾</span></h2>
           <button class="link-btn" id="reset-filters">limpar</button>
         </div>
         <div id="filters"></div>
@@ -75,8 +83,43 @@
 
   <div id="tooltip" class="tooltip" hidden></div>
 
+  <div id="help-modal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="modal-head">
+        <h3 id="help-title">Como gerar o relatório no Google Analytics 4</h3>
+        <button class="modal-close" id="help-close" type="button" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>O objetivo é exportar um CSV com <b>uma linha por cidade</b> e as métricas de tráfego. Há dois caminhos:</p>
+        <h4>Caminho rápido — Relatório pronto</h4>
+        <ol>
+          <li>No GA4, abra <b>Relatórios → Usuário → Dados demográficos → Detalhes demográficos</b>.</li>
+          <li>No seletor de dimensão (topo da tabela), troque <b>País</b> por <b>Cidade</b>.</li>
+          <li>Ajuste o <b>período</b> no canto superior direito.</li>
+          <li>Clique em <b>Compartilhar / Exportar</b> (ícone no topo) → <b>Baixar arquivo → CSV</b>.</li>
+        </ol>
+        <h4>Caminho completo — Exploração (mais colunas)</h4>
+        <ol>
+          <li>Vá em <b>Explorar</b> e crie uma exploração em <b>Formato livre</b>.</li>
+          <li>Em <b>Dimensões</b>, adicione <b>Cidade</b> (e, se quiser, <b>Região</b>, <b>Origem/Source</b> e <b>Mídia/Medium</b>).</li>
+          <li>Em <b>Métricas</b>, adicione <b>Sessões</b>, <b>Usuários</b>, <b>Principais eventos</b> (conversões) e <b>Receita total</b>.</li>
+          <li>Arraste <b>Cidade</b> para Linhas e as métricas para Valores. Aumente as <b>linhas exibidas</b> (500+).</li>
+          <li>Clique no ícone de <b>exportar</b> (canto superior direito) → <b>CSV</b>.</li>
+        </ol>
+        <h4>Google Sheets (sem baixar CSV)</h4>
+        <ol>
+          <li>No GA4/Exploração, exporte para <b>Google Sheets</b> (ou cole os dados numa planilha).</li>
+          <li>Em <b>Compartilhar</b>, deixe como <b>"Qualquer pessoa com o link" → Leitor</b>.</li>
+          <li>Copie o link e cole em <b>"ou ler do Google Sheets"</b> aqui no painel.</li>
+        </ol>
+        <p class="modal-note">Colunas reconhecidas automaticamente (PT ou EN): <code>cidade/City</code>, <code>estado/Region</code>, <code>sessoes/Sessions</code>, <code>usuarios/Total users</code>, <code>conversoes/Key events</code>, <code>receita/Total revenue</code>, <code>source</code>, <code>medium</code>. Colunas ausentes são simplesmente ignoradas. Tráfego fora do Brasil e <code>(not set)</code> são descartados no cruzamento.</p>
+      </div>
+    </div>
+  </div>
+
   <script src="data/municipios.js"></script>
   <script src="data/brazil-uf.js"></script>
+  <script src="data/municipios-geo.js"></script>
   <script src="src/utils/Normalizer.js"></script>
   <script src="src/utils/Formatter.js"></script>
   <script src="src/utils/MiniZip.js"></script>
