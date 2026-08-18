@@ -79,6 +79,7 @@ class CidadePerformance {
     const mps = popShare ? metricShare / popShare : 0;
     const receitaPerCapita = pop ? this.metrics.receita / pop : 0;
     const reach = pop ? this.metrics.usuarios / pop : 0;
+    const expected = popShare * metricTotal;
     this.indicators = {
       metric: metric,
       value: value,
@@ -90,6 +91,7 @@ class CidadePerformance {
       popShare: popShare,
       mps: mps,
       reach: reach,
+      expected: expected,
       opportunityGap: popShare - metricShare,
       receitaPerCapita: receitaPerCapita,
       receitaPer100k: receitaPerCapita * 100000,

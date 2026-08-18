@@ -717,13 +717,18 @@ class DashboardView {
 
   _tipFor(p) {
     const ind = p.indicators;
-    const origin = p.hasChannel ? '|Origem: ' + p.originLabel : '';
+    const m = ind.metric;
+    const label = Formatter.metricLabel(m);
+    const word = { sessoes: 'esperadas', usuarios: 'esperados', conversoes: 'esperadas', receita: 'esperada' }[m] || 'esperado';
+    const reach = m === 'usuarios'
+      ? '|Navegam no site: ' + Formatter.percent(ind.reach, 2) + ' da população'
+      : '';
     const txt = '<b>' + p.municipio.label + '</b>' +
-      '|Pop: ' + Formatter.integer(p.municipio.population) +
       '|MSVS: ' + Formatter.mps(ind.mps) + ' — ' + ind.band.label +
-      '|' + Formatter.metricLabel(ind.metric) + ': ' + Formatter.integer(ind.value) +
-      '|% métrica ' + Formatter.percent(ind.metricShare, 2) + ' · % pop ' + Formatter.percent(ind.popShare, 2) +
-      origin;
+      '|' + label + ': ' + Formatter.percent(ind.metricShare, 2) + ' (' +
+      Formatter.metricValue(m, ind.value) + ' de ' + Formatter.metricValue(m, ind.expected) + ' ' + word + ')' +
+      '|População: ' + Formatter.percent(ind.popShare, 2) + ' (' + Formatter.integer(p.municipio.population) + ')' +
+      reach;
     return this._attr(txt);
   }
 
