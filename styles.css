@@ -122,6 +122,9 @@ body {
 .dataset-header .ds-item { display: flex; flex-direction: column; line-height: 1.25; }
 .dataset-header .ds-lbl { font-size: 9.5px; text-transform: uppercase; letter-spacing: .4px; color: #7dd3fc; font-weight: 600; }
 .dataset-header .ds-val { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; }
+.dataset-header .ds-icon { font-size: 15px; }
+.dataset-header.is-sample { border-left-color: #f59e0b; background: rgba(245, 158, 11, .16); }
+.dataset-header.is-sample .ds-lbl { color: #fcd34d; }
 
 .btn {
   border: none; border-radius: 8px; padding: 9px 14px; font-size: 13px;

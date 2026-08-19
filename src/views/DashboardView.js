@@ -214,7 +214,14 @@ class DashboardView {
   _renderDatasetBanner(model) {
     const el = document.getElementById('dataset-header');
     const m = model.datasetMeta;
-    if (!m || (!m.property && !m.period)) { el.hidden = true; el.innerHTML = ''; return; }
+    if (!m || (!m.property && !m.period && !m.sample)) { el.hidden = true; el.innerHTML = ''; el.classList.remove('is-sample'); return; }
+    if (m.sample) {
+      el.classList.add('is-sample');
+      el.innerHTML = '<span class="ds-icon">⚠️</span><span class="ds-item"><span class="ds-lbl">Modo demonstração</span><span class="ds-val">Dados de exemplo (fictícios)</span></span>';
+      el.hidden = false;
+      return;
+    }
+    el.classList.remove('is-sample');
     const parts = [];
     if (m.property) parts.push('<span class="ds-item"><span class="ds-lbl">Propriedade GA4</span><span class="ds-val">' + this._esc(m.property) + '</span></span>');
     if (m.report) parts.push('<span class="ds-item"><span class="ds-lbl">Relatório</span><span class="ds-val">' + this._esc(m.report) + '</span></span>');
