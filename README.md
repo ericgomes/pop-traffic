@@ -1,6 +1,6 @@
-# Cidades — Análise Geográfica de Tráfego (MSVS)
+# Cidades — Análise Geográfica de Tráfego (OMSVS)
 
-Webapp client-side que cruza dados do **Google Analytics 4** com as **Estimativas da População Residente nos Municípios Brasileiros (IBGE POP2025, ref. 01/07/2025)** e calcula o **Market Share of Voice Score (MSVS)** de cada cidade — revelando onde a marca performa acima ou abaixo do esperado para o tamanho da população, eliminando o viés das capitais.
+Webapp client-side que cruza dados do **Google Analytics 4** com as **Estimativas da População Residente nos Municípios Brasileiros (IBGE POP2025, ref. 01/07/2025)** e calcula o **Online Market Share of Voice Score (OMSVS)** de cada cidade — revelando onde a marca performa acima ou abaixo do esperado para o tamanho da população, eliminando o viés das capitais.
 
 ## Como rodar
 
@@ -29,9 +29,9 @@ Tráfego estrangeiro / `(not set)` é identificado e excluído do cálculo; a qu
 
 - Métrica por habitante, por mil e por 100 mil habitantes
 - Participação da métrica e participação populacional
-- **MSVS = % da métrica / % da população**
+- **OMSVS = % da métrica / % da população**
 
-| Faixa MSVS | Interpretação |
+| Faixa OMSVS | Interpretação |
 |---|---|
 | < 0,5 | Muito abaixo do esperado |
 | 0,5 – 0,9 | Abaixo do esperado |
@@ -42,7 +42,7 @@ Tráfego estrangeiro / `(not set)` é identificado e excluído do cálculo; a qu
 
 ## Recursos
 
-Dashboard executivo · Tabela ordenável · Rankings · Gráfico de barras · Heatmap · Scatter plot com linha de tendência · Mapa do Brasil (choropleth por UF) · Insights automáticos · Filtros (UF, capital/interior, população, MSVS, mínimos por métrica) · Correção manual de match (salva em `localStorage`) · Exportação **CSV / XLSX / PDF** (geradas offline, sem dependências).
+Dashboard executivo · Tabela ordenável · Rankings · Gráfico de barras · Heatmap · Scatter plot com linha de tendência · Mapa do Brasil (choropleth por UF) · Insights automáticos · Filtros (UF, capital/interior, população, OMSVS, mínimos por métrica) · Correção manual de match (salva em `localStorage`) · Exportação **CSV / XLSX / PDF** (geradas offline, sem dependências).
 
 ## Arquitetura
 

@@ -469,18 +469,18 @@ class DashboardController {
 
   exportCSV() {
     const cols = this._exportColumns();
-    this.exporter.exportCSV('analise-msvs-' + this.metric + '.csv', cols, this.sortedList(this.filteredList()));
+    this.exporter.exportCSV('analise-omsvs-' + this.metric + '.csv', cols, this.sortedList(this.filteredList()));
   }
 
   exportXLSX() {
     const cols = this._exportColumns();
-    this.exporter.exportXLSX('analise-msvs-' + this.metric + '.xlsx', cols, this.sortedList(this.filteredList()), 'MSVS ' + Formatter.metricLabel(this.metric));
+    this.exporter.exportXLSX('analise-omsvs-' + this.metric + '.xlsx', cols, this.sortedList(this.filteredList()), 'OMSVS ' + Formatter.metricLabel(this.metric));
   }
 
   exportPDF() {
     const filtered = this.filteredList();
     const model = this.analysis.buildView(filtered, this.metric);
-    this.exporter.exportPDF('analise-msvs-' + this.metric + '.pdf', this._pdfReport(model));
+    this.exporter.exportPDF('analise-omsvs-' + this.metric + '.pdf', this._pdfReport(model));
   }
 
   _exportColumns() {
@@ -501,7 +501,7 @@ class DashboardController {
       { label: '% Métrica', value: (p) => Number((p.indicators.metricShare * 100).toFixed(4)) },
       { label: '% População', value: (p) => Number((p.indicators.popShare * 100).toFixed(4)) },
       { label: 'Alcance % (usuários/pop)', value: (p) => Number((p.indicators.reach * 100).toFixed(4)) },
-      { label: 'MSVS', value: (p) => Number(p.indicators.mps.toFixed(4)) },
+      { label: 'OMSVS', value: (p) => Number(p.indicators.mps.toFixed(4)) },
       { label: 'Classificação', value: (p) => p.indicators.band.label },
       { label: 'Fonte', value: (p) => p.sourceLabel },
       { label: 'Mídia', value: (p) => p.mediumLabel }
@@ -522,19 +522,19 @@ class DashboardController {
         'Usuários totais: ' + Formatter.integer(s.totalUsuarios),
         'Conversões totais: ' + Formatter.integer(s.totalConversoes),
         'Receita total: ' + Formatter.currency(s.totalReceita),
-        'Maior MSVS: ' + (s.topCity ? s.topCity.municipio.label + ' (' + Formatter.mps(s.topCity.indicators.mps) + ')' : '—'),
-        'Menor MSVS: ' + (s.bottomCity ? s.bottomCity.municipio.label + ' (' + Formatter.mps(s.bottomCity.indicators.mps) + ')' : '—')
+        'Maior OMSVS: ' + (s.topCity ? s.topCity.municipio.label + ' (' + Formatter.mps(s.topCity.indicators.mps) + ')' : '—'),
+        'Menor OMSVS: ' + (s.bottomCity ? s.bottomCity.municipio.label + ' (' + Formatter.mps(s.bottomCity.indicators.mps) + ')' : '—')
       ]
     });
     sections.push({
-      title: 'Top 10 destaques por MSVS',
+      title: 'Top 10 destaques por OMSVS',
       table: {
         columns: [
           { label: 'Município', width: 50 },
           { label: 'UF', width: 12 },
           { label: 'População', width: 28 },
           { label: metricLabel, width: 28 },
-          { label: 'MSVS', width: 16 },
+          { label: 'OMSVS', width: 16 },
           { label: 'Classificação', width: 46 }
         ],
         rows: model.classifications.topMps.slice(0, 10).map((p) => [
@@ -551,7 +551,7 @@ class DashboardController {
           { label: 'UF', width: 12 },
           { label: 'População', width: 28 },
           { label: metricLabel, width: 28 },
-          { label: 'MSVS', width: 16 }
+          { label: 'OMSVS', width: 16 }
         ],
         rows: model.summary.topOpportunities.map((p) => [
           p.municipio.name, p.municipio.uf, Formatter.integer(p.municipio.population),
@@ -564,7 +564,7 @@ class DashboardController {
       lines: model.insights.map((i) => '- ' + i.text)
     });
     return {
-      title: 'Cidades — Market Share of Voice Score (MSVS) por ' + metricLabel,
+      title: 'Cidades — Online Market Share of Voice Score (OMSVS) por ' + metricLabel,
       subtitle: 'Base IBGE POP2025 (ref. ' + this.population.ref + ') · ' + Formatter.integer(s.municipios) + ' municípios analisados',
       sections: sections
     };

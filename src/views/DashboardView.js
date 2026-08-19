@@ -177,7 +177,7 @@ class DashboardView {
     document.getElementById('kpi-grid').innerHTML = '';
     document.getElementById('tab-content').innerHTML =
       '<div class="empty"><div class="big">📊</div><h3>Importe um CSV do Google Analytics 4 para começar</h3>' +
-      '<p class="sub">O sistema cruza o tráfego com a população estimada de 5.571 municípios (IBGE POP2025) e calcula o Market Share of Voice Score (MSVS) de cada cidade.</p>' +
+      '<p class="sub">O sistema cruza o tráfego com a população estimada de 5.571 municípios (IBGE POP2025) e calcula o Online Market Share of Voice Score (OMSVS) de cada cidade.</p>' +
       '<p class="sub">Use o botão <b>Carregar dados de exemplo</b> para uma demonstração imediata.</p></div>';
   }
 
@@ -287,8 +287,8 @@ class DashboardView {
       '<div class="filter-group"><label>Capital ou Interior</label><div class="seg">' + seg + '</div></div>' +
       this._channelFilters(model) +
       range('População', 'popMin', 'popMax') +
-      '<div class="filter-group">' + head('Faixa de MSVS', 'band') + bandPresets + '<div class="band-chips">' + bandChips + '</div></div>' +
-      range('MSVS (mín / máx)', 'mpsMin', 'mpsMax') +
+      '<div class="filter-group">' + head('Faixa de OMSVS', 'band') + bandPresets + '<div class="band-chips">' + bandChips + '</div></div>' +
+      range('OMSVS (mín / máx)', 'mpsMin', 'mpsMax') +
       range('Sessões mín.', 'sessoesMin') +
       range('Usuários mín.', 'usuariosMin') +
       range('Conversões mín.', 'conversoesMin') +
@@ -341,7 +341,7 @@ class DashboardView {
       return '<div class="dist-item"><span class="sw" style="background:' + b.color + '"></span>' +
         '<span class="dist-name">' + b.label + '</span><span class="dist-val"><b>' + c + '</b> · ' + pct.toFixed(1) + '%</span></div>';
     }).join('');
-    return '<div class="dist-block"><h4 style="margin:0 0 8px;font-size:13px">Distribuição por faixa de MSVS <span class="tag">' + dist.total + ' cidades</span></h4>' +
+    return '<div class="dist-block"><h4 style="margin:0 0 8px;font-size:13px">Distribuição por faixa de OMSVS <span class="tag">' + dist.total + ' cidades</span></h4>' +
       '<div class="dist-bar">' + bar + '</div><div class="dist-legend">' + legend + '</div></div>';
   }
 
@@ -363,8 +363,8 @@ class DashboardView {
       metricItem('usuarios', Formatter.compact(s.totalUsuarios)) +
       metricItem('conversoes', Formatter.compact(s.totalConversoes)) +
       metricItem('receita', Formatter.currency(s.totalReceita));
-    const groupC = item('Menor MSVS', s.bottomCity ? Formatter.mps(s.bottomCity.indicators.mps) : '—', s.bottomCity ? s.bottomCity.municipio.label : '', 'bad') +
-      item('Maior MSVS', s.topCity ? Formatter.mps(s.topCity.indicators.mps) : '—', s.topCity ? s.topCity.municipio.label : '', 'good');
+    const groupC = item('Menor OMSVS', s.bottomCity ? Formatter.mps(s.bottomCity.indicators.mps) : '—', s.bottomCity ? s.bottomCity.municipio.label : '', 'bad') +
+      item('Maior OMSVS', s.topCity ? Formatter.mps(s.topCity.indicators.mps) : '—', s.topCity ? s.topCity.municipio.label : '', 'good');
     document.getElementById('kpi-grid').innerHTML =
       '<div class="kpi-group cobertura">' + groupA + '</div>' +
       '<div class="kpi-group trafego">' + groupB + '</div>' +
@@ -409,7 +409,7 @@ class DashboardView {
     return '<h3>Dashboard executivo</h3><p class="sub">Visão consolidada da performance digital proporcional à população — métrica: <b>' + Formatter.metricLabel(model.metric) + '</b>.</p>' +
       this._bandDistributionHtml(model) +
       '<div class="ranking-grid">' +
-      '<div class="rank-card"><h4>🚀 Top 10 destaques (maior MSVS)</h4><ul class="rank-list">' + high + '</ul></div>' +
+      '<div class="rank-card"><h4>🚀 Top 10 destaques (maior OMSVS)</h4><ul class="rank-list">' + high + '</ul></div>' +
       '<div class="rank-card"><h4>🎯 Top 10 oportunidades (baixa presença x população)</h4><ul class="rank-list">' + opp + '</ul></div>' +
       '</div><h4 style="margin:20px 0 10px;font-size:14px">Insights automáticos</h4><div class="insights-grid">' + insights + '</div>';
   }
@@ -435,7 +435,7 @@ class DashboardView {
       { key: 'metricShare', label: '% métrica' },
       { key: 'popShare', label: '% pop' },
       { key: 'reach', label: 'Alcance' },
-      { key: 'mps', label: 'MSVS' }
+      { key: 'mps', label: 'OMSVS' }
     );
     const head = cols.map((c) => {
       if (c.noSort) return '<th class="' + (c.left ? 'left' : '') + '">' + c.label + '</th>';
@@ -470,8 +470,8 @@ class DashboardView {
         '<li style="color:var(--ink-soft)">sem municípios nesta faixa</li>';
       return '<div class="rank-card ' + (b.cls || '') + '"><h4>' + b.t + ' <span class="tag">' + b.list.length + '</span></h4><ul class="rank-list">' + items + '</ul></div>';
     };
-    const topMps = card({ t: '🏆 Maior MSVS', list: c.topMps, fmt: mps, cls: 'rank-top' });
-    const bottomMps = card({ t: '📉 Menor MSVS', list: c.bottomMps, fmt: mps, cls: 'rank-bottom' });
+    const topMps = card({ t: '🏆 Maior OMSVS', list: c.topMps, fmt: mps, cls: 'rank-top' });
+    const bottomMps = card({ t: '📉 Menor OMSVS', list: c.bottomMps, fmt: mps, cls: 'rank-bottom' });
     const rest = [
       { t: '🏙️ Top capitais', list: c.topCapitais, fmt: mps },
       { t: '🌄 Top interior', list: c.topInterior, fmt: mps },
@@ -480,7 +480,7 @@ class DashboardView {
       { t: '🎯 Top oportunidades', list: c.opportunities, fmt: mps },
       { t: '💰 Top receita proporcional', list: c.topReceita, fmt: (p) => Formatter.currency(p.indicators.receitaPer100k) + '/100k' }
     ].map(card).join('');
-    return '<h3>Classificações</h3><p class="sub">Rankings por Market Share of Voice Score — métrica: <b>' + Formatter.metricLabel(model.metric) + '</b>.</p>' +
+    return '<h3>Classificações</h3><p class="sub">Rankings por Online Market Share of Voice Score — métrica: <b>' + Formatter.metricLabel(model.metric) + '</b>.</p>' +
       '<div class="rank-extremes"><div class="rank-col rank-col-top"><div class="rank-col-label">▲ Melhores</div>' + topMps + '</div>' +
       '<div class="rank-col rank-col-bottom"><div class="rank-col-label">▼ Piores</div>' + bottomMps + '</div></div>' +
       '<div class="rank-divider">Outras classificações</div>' +
@@ -498,7 +498,7 @@ class DashboardView {
         '<div class="bar-track"><div class="bar-fill" style="width:' + w + '%;background:' + p.indicators.band.color + '"></div></div>' +
         '<div style="text-align:right;font-weight:700">' + Formatter.mps(p.indicators.mps) + '</div></div>';
     }).join('');
-    return '<h3>Cidades por MSVS</h3><p class="sub">Todas as ' + Formatter.integer(list.length) + ' cidades filtradas, ordenadas por MSVS. Quanto maior a barra, maior a presença digital proporcional à população.</p>' +
+    return '<h3>Cidades por OMSVS</h3><p class="sub">Todas as ' + Formatter.integer(list.length) + ' cidades filtradas, ordenadas por OMSVS. Quanto maior a barra, maior a presença digital proporcional à população.</p>' +
       this._bandLegend() + '<div class="bars bars-scroll">' + rows + '</div>';
   }
 
@@ -508,7 +508,7 @@ class DashboardView {
     const cells = list.map((p) =>
       '<div class="heat-cell" data-tip="' + this._tipFor(p) + '" style="background:' + p.indicators.band.color + '">' +
       '<span>' + this._esc(this._abbr(p.municipio.name)) + '<br>' + Formatter.mps(p.indicators.mps) + '</span></div>').join('');
-    return '<h3>Heatmap de MSVS</h3><p class="sub">Todas as ' + Formatter.integer(list.length) + ' cidades filtradas, ordenadas por MSVS e coloridas pela faixa de performance.</p>' +
+    return '<h3>Heatmap de OMSVS</h3><p class="sub">Todas as ' + Formatter.integer(list.length) + ' cidades filtradas, ordenadas por OMSVS e coloridas pela faixa de performance.</p>' +
       this._bandLegend() + '<div class="heatmap heatmap-auto">' + cells + '</div>';
   }
 
@@ -544,7 +544,7 @@ class DashboardView {
         '<text x="' + (pad - 8) + '" y="' + (y + 3) + '" text-anchor="end">' + Formatter.compact(Math.pow(10, t)) + '</text>';
     }).join('');
     return '<h3>Scatter Plot — População × ' + Formatter.metricLabel(model.metric) + '</h3>' +
-      '<p class="sub">Escala logarítmica. Bolha = MSVS · cor = faixa · <b>linha diagonal</b> = proporção exata (MSVS = 1, %métrica = %população) · <b>cruz pontilhada</b> = mediana (4 quadrantes).</p>' + this._bandLegend() +
+      '<p class="sub">Escala logarítmica. Bolha = OMSVS · cor = faixa · <b>linha diagonal</b> = proporção exata (OMSVS = 1, %métrica = %população) · <b>cruz pontilhada</b> = mediana (4 quadrantes).</p>' + this._bandLegend() +
       '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '">' + gx + gy +
       '<text x="' + (W / 2) + '" y="' + (H - 12) + '" text-anchor="middle">População estimada 2025</text>' +
       '<text x="16" y="' + (H / 2) + '" text-anchor="middle" transform="rotate(-90 16 ' + (H / 2) + ')">' + Formatter.metricLabel(model.metric) + '</text>' +
@@ -624,19 +624,19 @@ class DashboardView {
             '" fill="' + p.indicators.band.color + '" data-tip="' + this._tipFor(p) + '"></circle>';
         }).join('');
       layer = outline + dots;
-      subtitle = Formatter.integer(cities.length) + ' municípios plotados por centróide · tamanho = ' + Formatter.metricLabel(model.metric) + ' · cor = faixa de MSVS.';
+      subtitle = Formatter.integer(cities.length) + ' municípios plotados por centróide · tamanho = ' + Formatter.metricLabel(model.metric) + ' · cor = faixa de OMSVS.';
     } else {
       const agg = this._aggregateByUf(model.filtered, model.metric);
       layer = geo.map((f) => {
         const a = agg[f.sigla];
         const color = a && a.mps > 0 ? CidadePerformance.bandFor(a.mps).color : '#e2e8f0';
-        const tip = a ? '<b>' + f.name + ' (' + f.sigla + ')</b>|MSVS ' + Formatter.mps(a.mps) + ' · ' + a.count + ' mun.|' +
+        const tip = a ? '<b>' + f.name + ' (' + f.sigla + ')</b>|OMSVS ' + Formatter.mps(a.mps) + ' · ' + a.count + ' mun.|' +
           Formatter.metricLabel(model.metric) + ': ' + Formatter.compact(a.metric) + '|Pop: ' + Formatter.compact(a.pop) :
           '<b>' + f.name + ' (' + f.sigla + ')</b>|sem dados';
         const d = f.polys.map((poly) => 'M' + poly.map((pt) => px(pt[0]).toFixed(1) + ' ' + py(pt[1]).toFixed(1)).join('L') + 'Z').join(' ');
         return '<path class="map-uf" d="' + d + '" fill="' + color + '" data-tip="' + this._attr(tip) + '"></path>';
       }).join('');
-      subtitle = 'Cada estado é colorido pelo MSVS médio (ponderado por população) dos municípios filtrados.';
+      subtitle = 'Cada estado é colorido pelo OMSVS médio (ponderado por população) dos municípios filtrados.';
     }
 
     const modeBtns = [['uf', 'Por UF'], ['cidade', 'Por cidade']].map((m) =>
@@ -646,7 +646,7 @@ class DashboardView {
       const enabled = model.availableMetrics.indexOf(m) !== -1;
       return '<button class="btn ' + (on ? 'btn-export' : 'btn-secondary') + '" data-mapmetric="' + m + '"' + (enabled ? '' : ' disabled') + ' style="margin:0">' + Formatter.metricLabel(m) + '</button>';
     }).join(' ');
-    return '<h3>Mapa do Brasil — MSVS ' + (mode === 'cidade' ? 'por cidade' : 'por UF') + '</h3><p class="sub">' + subtitle + '</p>' +
+    return '<h3>Mapa do Brasil — OMSVS ' + (mode === 'cidade' ? 'por cidade' : 'por UF') + '</h3><p class="sub">' + subtitle + '</p>' +
       '<div class="map-controls"><div class="map-seg">' + modeBtns + '</div><div class="map-seg">' + metricBtns + '</div></div>' + this._bandLegend() +
       '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" style="max-width:700px;margin:auto">' + layer + '</svg>';
   }
@@ -674,7 +674,7 @@ class DashboardView {
     if (!insights.length) return '<h3>Insights automáticos</h3><p class="sub">Sem insights para o recorte atual.</p>';
     const cards = insights.map((i) =>
       '<div class="insight ' + i.type + '"><div class="ic-city">' + this._esc(i.city) + '</div>' + this._esc(i.text) + '</div>').join('');
-    return '<h3>Insights automáticos</h3><p class="sub">Frases geradas a partir do MSVS e das participações de cada município.</p>' +
+    return '<h3>Insights automáticos</h3><p class="sub">Frases geradas a partir do OMSVS e das participações de cada município.</p>' +
       '<div class="insights-grid">' + cards + '</div>';
   }
 
@@ -767,7 +767,7 @@ class DashboardView {
       ? '|Navegam no site: ' + Formatter.percent(ind.reach, 2) + ' da população'
       : '';
     const txt = '<b>' + p.municipio.label + '</b>' +
-      '|MSVS: ' + Formatter.mps(ind.mps) + ' — ' + ind.band.label +
+      '|OMSVS: ' + Formatter.mps(ind.mps) + ' — ' + ind.band.label +
       '|' + label + ': ' + Formatter.percent(ind.metricShare, 2) + ' (' +
       Formatter.metricValue(m, ind.value) + ' de ' + Formatter.metricValue(m, ind.expected) + ' ' + word + ')' +
       '|População: ' + Formatter.percent(ind.popShare, 2) + ' (' + Formatter.integer(p.municipio.population) + ')' +
