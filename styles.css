@@ -256,6 +256,7 @@ table.grid tbody tr:hover { background: #f8fafc; }
 .rank-list li .vl { font-weight: 700; }
 
 .bars { display: flex; flex-direction: column; gap: 6px; }
+.bars-scroll { max-height: 640px; overflow-y: auto; padding-right: 6px; }
 .bar-row { display: grid; grid-template-columns: 180px 1fr 70px; align-items: center; gap: 10px; font-size: 12px; }
 .bar-track { background: #f1f5f9; border-radius: 6px; height: 20px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 6px; }

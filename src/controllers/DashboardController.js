@@ -13,8 +13,8 @@ class DashboardController {
     this.datasetMeta = null;
     this.metric = 'sessoes';
     this.matchResult = null;
-    this.activeTab = 'dashboard';
-    this.mapMode = 'uf';
+    this.activeTab = this._tabFromHash() || 'dashboard';
+    this.mapMode = 'cidade';
     this.sort = { key: 'population', dir: 'desc' };
     this.basePerformances = [];
     this.channelAll = { sources: [], mediums: [] };
@@ -91,6 +91,7 @@ class DashboardController {
       cached: !!this.population.cachedMeta()
     });
     this.view.renderEmpty();
+    window.addEventListener('hashchange', () => this.onHashChange());
     this.autoLoadFromUrl();
   }
 
@@ -245,7 +246,23 @@ class DashboardController {
 
   setActiveTab(tab) {
     this.activeTab = tab;
+    if (location.hash !== '#' + tab) {
+      try { location.hash = tab; } catch (e) {}
+    }
     this.render();
+  }
+
+  _tabFromHash() {
+    const h = (location.hash || '').replace(/^#/, '').trim().toLowerCase();
+    return DashboardController.TABS.indexOf(h) !== -1 ? h : null;
+  }
+
+  onHashChange() {
+    const tab = this._tabFromHash();
+    if (tab && tab !== this.activeTab) {
+      this.activeTab = tab;
+      if (this.matchResult && this.matchResult.performances.length) this.render();
+    }
   }
 
   updateFilters(partial) {
@@ -549,6 +566,8 @@ class DashboardController {
     };
   }
 }
+
+DashboardController.TABS = ['dashboard', 'tabela', 'ranking', 'barras', 'heatmap', 'scatter', 'mapa', 'insights', 'casos'];
 
 DashboardController.SAMPLE_CSV = [
   'cidade,estado,sessoes,usuarios,conversoes,receita,source,medium',

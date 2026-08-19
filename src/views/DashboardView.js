@@ -481,7 +481,7 @@ class DashboardView {
   }
 
   _tabBars(model) {
-    const list = model.view.classifications.topMps.slice(0, 25);
+    const list = model.view.sorted;
     if (!list.length) return '<h3>Gráfico de barras</h3><p class="sub">Sem dados.</p>';
     const max = list[0].indicators.mps || 1;
     const rows = list.map((p) => {
@@ -491,8 +491,8 @@ class DashboardView {
         '<div class="bar-track"><div class="bar-fill" style="width:' + w + '%;background:' + p.indicators.band.color + '"></div></div>' +
         '<div style="text-align:right;font-weight:700">' + Formatter.mps(p.indicators.mps) + '</div></div>';
     }).join('');
-    return '<h3>Top 25 cidades por MSVS</h3><p class="sub">Quanto maior a barra, maior a presença digital proporcional à população.</p>' +
-      this._bandLegend() + '<div class="bars">' + rows + '</div>';
+    return '<h3>Cidades por MSVS</h3><p class="sub">Todas as ' + Formatter.integer(list.length) + ' cidades filtradas, ordenadas por MSVS. Quanto maior a barra, maior a presença digital proporcional à população.</p>' +
+      this._bandLegend() + '<div class="bars bars-scroll">' + rows + '</div>';
   }
 
   _tabHeatmap(model) {
