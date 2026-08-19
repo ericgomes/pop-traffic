@@ -169,12 +169,23 @@ class DashboardView {
       .join('');
   }
 
+  applyAccess(authorized) {
+    this.authorized = authorized;
+    document.getElementById('import-panel').hidden = !authorized;
+  }
+
   renderEmpty() {
     document.getElementById('metric-panel').hidden = true;
     document.getElementById('filter-panel').hidden = true;
     document.getElementById('export-bar').hidden = true;
     document.getElementById('dataset-header').hidden = true;
     document.getElementById('kpi-grid').innerHTML = '';
+    if (!this.authorized) {
+      document.getElementById('tab-content').innerHTML =
+        '<div class="empty"><div class="big">🔒</div><h3>Acesso restrito</h3>' +
+        '<p class="sub">Esta ferramenta é de uso interno. Informe o token de acesso na URL para utilizá-la.</p></div>';
+      return;
+    }
     document.getElementById('tab-content').innerHTML =
       '<div class="empty"><div class="big">📊</div><h3>Importe um CSV do Google Analytics 4 para começar</h3>' +
       '<p class="sub">O sistema cruza o tráfego com a população estimada de 5.571 municípios (IBGE POP2025) e calcula o Online Market Share of Voice Score (OMSVS) de cada cidade.</p>' +

@@ -21,6 +21,27 @@ class DashboardController {
     this.channelPreset = 'todas';
     this.filters = this._emptyFilters();
     this.autoBounds = {};
+    this.authorized = this._checkAccess();
+  }
+
+  _checkAccess() {
+    const key = new URLSearchParams(location.search).get('key');
+    if (key === null) return false;
+    return this._hash(key) === DashboardController.ACCESS_KEY_HASH;
+  }
+
+  _hash(str) {
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0, ch; i < str.length; i++) {
+      ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+    h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+    h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
   }
 
   _emptyFilters() {
@@ -84,6 +105,7 @@ class DashboardController {
   init() {
     this.population.load();
     this.view.bind(this);
+    this.view.applyAccess(this.authorized);
     this.view.renderShell({
       ref: this.population.ref,
       count: this.population.count,
@@ -572,6 +594,8 @@ class DashboardController {
 }
 
 DashboardController.TABS = ['dashboard', 'tabela', 'ranking', 'barras', 'heatmap', 'scatter', 'mapa', 'insights', 'casos'];
+
+DashboardController.ACCESS_KEY_HASH = 5767703782216555;
 
 DashboardController.SAMPLE_CSV = [
   'cidade,estado,sessoes,usuarios,conversoes,receita,source,medium',
