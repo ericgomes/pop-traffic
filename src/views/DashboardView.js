@@ -26,6 +26,15 @@ class DashboardView {
     });
     document.getElementById('sample-btn').addEventListener('click', () => c.loadSample());
     document.getElementById('sheet-btn').addEventListener('click', () => c.importFromSheets(document.getElementById('sheet-url').value));
+    document.getElementById('sheet-token-btn').addEventListener('click', () => c.generateSheetToken(document.getElementById('sheet-url').value));
+    document.getElementById('import-status').addEventListener('click', (e) => {
+      if (!e.target.closest('#copy-token')) return;
+      const input = document.getElementById('token-link');
+      if (!input) return;
+      input.select();
+      try { navigator.clipboard.writeText(input.value); } catch (err) { document.execCommand('copy'); }
+      e.target.textContent = 'copiado!';
+    });
     document.getElementById('reset-filters').addEventListener('click', () => c.resetFilters());
 
     this._restoreSidebar();
@@ -164,6 +173,7 @@ class DashboardView {
     document.getElementById('metric-panel').hidden = true;
     document.getElementById('filter-panel').hidden = true;
     document.getElementById('export-bar').hidden = true;
+    document.getElementById('dataset-header').hidden = true;
     document.getElementById('kpi-grid').innerHTML = '';
     document.getElementById('tab-content').innerHTML =
       '<div class="empty"><div class="big">📊</div><h3>Importe um CSV do Google Analytics 4 para começar</h3>' +
@@ -179,18 +189,38 @@ class DashboardView {
     document.getElementById('import-status').innerHTML = '<div style="color:var(--ink-soft)">⏳ ' + this._esc(message) + '</div>';
   }
 
+  showSheetLink(link) {
+    document.getElementById('import-status').innerHTML =
+      '<div class="token-box"><div class="ok">✓ Link gerado — já abre esta planilha automaticamente:</div>' +
+      '<input type="text" id="token-link" class="sheet-input" readonly value="' + this._attr(link) + '">' +
+      '<button class="btn btn-secondary" id="copy-token" type="button">copiar link</button></div>';
+  }
+
   render(model) {
     this.model = model;
     document.getElementById('metric-panel').hidden = false;
     document.getElementById('filter-panel').hidden = false;
     document.getElementById('export-bar').hidden = false;
 
+    this._renderDatasetBanner(model);
     this._renderStatus(model);
     this._renderMetricOptions(model);
     this._renderFilters(model);
     this._renderKpis(model);
     this._renderTabs(model);
     this._renderActiveTab(model);
+  }
+
+  _renderDatasetBanner(model) {
+    const el = document.getElementById('dataset-header');
+    const m = model.datasetMeta;
+    if (!m || (!m.property && !m.period)) { el.hidden = true; el.innerHTML = ''; return; }
+    const parts = [];
+    if (m.property) parts.push('<span class="ds-item"><span class="ds-lbl">Propriedade GA4</span><span class="ds-val">' + this._esc(m.property) + '</span></span>');
+    if (m.report) parts.push('<span class="ds-item"><span class="ds-lbl">Relatório</span><span class="ds-val">' + this._esc(m.report) + '</span></span>');
+    if (m.period) parts.push('<span class="ds-item"><span class="ds-lbl">Período</span><span class="ds-val">' + this._esc(m.period) + '</span></span>');
+    el.innerHTML = parts.join('');
+    el.hidden = false;
   }
 
   _renderStatus(model) {

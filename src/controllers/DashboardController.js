@@ -10,6 +10,7 @@ class DashboardController {
     this.rawRows = [];
     this.availableMetrics = [];
     this.sourceHeaders = {};
+    this.datasetMeta = null;
     this.metric = 'sessoes';
     this.matchResult = null;
     this.activeTab = 'dashboard';
@@ -90,6 +91,7 @@ class DashboardController {
       cached: !!this.population.cachedMeta()
     });
     this.view.renderEmpty();
+    this.autoLoadFromUrl();
   }
 
   importText(text) {
@@ -101,6 +103,7 @@ class DashboardController {
     this.rawRows = parsed.rows;
     this.availableMetrics = parsed.metrics;
     this.sourceHeaders = parsed.sourceHeaders || {};
+    this.datasetMeta = parsed.meta || null;
     this.metric = parsed.metrics.length ? parsed.metrics[0] : 'sessoes';
     this.filters = this._emptyFilters();
     this._runMatch();
@@ -119,6 +122,10 @@ class DashboardController {
       this.view.showImportError('Link do Google Sheets inválido. Cole a URL completa da planilha.');
       return;
     }
+    this._importSheetRef(ref);
+  }
+
+  _importSheetRef(ref) {
     this.view.showImportInfo('Lendo planilha do Google Sheets…');
     const csvUrl = 'https://docs.google.com/spreadsheets/d/' + ref.id + '/export?format=csv&gid=' + ref.gid;
     fetch(csvUrl)
@@ -135,6 +142,27 @@ class DashboardController {
       });
   }
 
+  generateSheetToken(url) {
+    const ref = this._parseSheetUrl(url);
+    if (!ref) {
+      this.view.showImportError('Cole primeiro o link da planilha para gerar o token.');
+      return;
+    }
+    const token = DashboardController.encodeToken(ref.id, ref.gid);
+    const link = location.origin + location.pathname + '?t=' + token;
+    this.view.showSheetLink(link);
+  }
+
+  autoLoadFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('t');
+    if (!token) return false;
+    const ref = DashboardController.decodeToken(token);
+    if (!ref) return false;
+    this._importSheetRef(ref);
+    return true;
+  }
+
   _parseSheetUrl(url) {
     const s = String(url || '').trim();
     if (!s) return null;
@@ -142,6 +170,21 @@ class DashboardController {
     if (!idMatch) return null;
     const gidMatch = s.match(/[#?&]gid=(\d+)/);
     return { id: idMatch[1], gid: gidMatch ? gidMatch[1] : '0' };
+  }
+
+  static encodeToken(id, gid) {
+    return btoa(id + '|' + (gid || '0')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  static decodeToken(token) {
+    try {
+      const b = String(token).replace(/-/g, '+').replace(/_/g, '/');
+      const parts = atob(b).split('|');
+      if (!parts[0]) return null;
+      return { id: parts[0], gid: parts[1] || '0' };
+    } catch (e) {
+      return null;
+    }
   }
 
   _runMatch() {
@@ -368,6 +411,7 @@ class DashboardController {
       metric: this.metric,
       availableMetrics: this.availableMetrics,
       sourceHeaders: this.sourceHeaders,
+      datasetMeta: this.datasetMeta,
       matchResult: this.matchResult,
       view: viewModel,
       filtered: filtered,

@@ -38,7 +38,35 @@ class GA4ImportService {
     for (const field of Object.keys(fields)) {
       sourceHeaders[field] = header[fields[field]] || '';
     }
-    return { ok: true, rows: rows, fields: fields, metrics: metrics, sourceHeaders: sourceHeaders, delimiter: delimiter, header: header };
+    const meta = this._extractMeta(lines.slice(0, headerIndex), delimiter);
+    return { ok: true, rows: rows, fields: fields, metrics: metrics, sourceHeaders: sourceHeaders, meta: meta, delimiter: delimiter, header: header };
+  }
+
+  _extractMeta(preamble, delimiter) {
+    const fmt = (d) => {
+      const m = String(d).match(/^(\d{4})(\d{2})(\d{2})$/);
+      return m ? m[3] + '/' + m[2] + '/' + m[1] : String(d);
+    };
+    const clean = preamble
+      .map((l) => this._parseLine(l, delimiter)[0] || '')
+      .map((l) => l.replace(/^#+\s*/, '').replace(/[\s,]+$/, '').trim())
+      .filter((l) => l && !/^[-=_]+$/.test(l));
+    const meta = { property: '', account: '', report: '', period: '', start: '', end: '' };
+    const free = [];
+    for (const line of clean) {
+      let mm;
+      if ((mm = line.match(/^property\s*:\s*(.+)/i))) meta.property = mm[1].trim();
+      else if ((mm = line.match(/^account\s*:\s*(.+)/i))) meta.account = mm[1].trim();
+      else if ((mm = line.match(/^start date\s*:\s*(\d{8})/i))) meta.start = fmt(mm[1]);
+      else if ((mm = line.match(/^end date\s*:\s*(\d{8})/i))) meta.end = fmt(mm[1]);
+      else if ((mm = line.match(/^(\d{8})\s*[-–]\s*(\d{8})$/))) { meta.start = fmt(mm[1]); meta.end = fmt(mm[2]); }
+      else if (/^all users$/i.test(line)) { continue; }
+      else free.push(line);
+    }
+    if (!meta.property && free.length) meta.property = free.shift();
+    if (!meta.report && free.length) meta.report = free[0];
+    meta.period = meta.start && meta.end ? meta.start + ' – ' + meta.end : (meta.start || meta.end || '');
+    return (meta.property || meta.account || meta.period) ? meta : null;
   }
 
   _splitLines(text) {

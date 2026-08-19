@@ -15,6 +15,7 @@
         <p>Análise geográfica de tráfego · MSVS · IBGE POP2025 + Google Analytics 4</p>
       </div>
     </div>
+    <div id="dataset-header" class="dataset-header" hidden></div>
     <div id="base-summary" class="base-summary"></div>
   </header>
 
@@ -39,7 +40,10 @@
         <details class="paste-block">
           <summary>ou ler do Google Sheets</summary>
           <input type="text" id="sheet-url" class="sheet-input" placeholder="Cole o link da planilha (compartilhada com 'qualquer pessoa com o link')">
-          <button class="btn btn-secondary" id="sheet-btn">Importar do Sheets</button>
+          <div class="sheet-actions">
+            <button class="btn btn-secondary" id="sheet-btn">Importar do Sheets</button>
+            <button class="btn btn-secondary" id="sheet-token-btn" title="Gera um link fixo que já abre esta planilha">Gerar link</button>
+          </div>
         </details>
         <details class="paste-block">
           <summary>ou colar dados</summary>
